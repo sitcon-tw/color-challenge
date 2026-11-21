@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-NPVBCDZ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#202924">
+  <meta name="description" content="對照 SITCON 標準綠，在全彩色盤上選色並調整明度，送出後揭曉你差多少。">
+  <title>SITCON Color Challenge｜調出 SITCON 綠</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="color.js"></script>
+  <script defer src="game.js"></script>
+  <script defer src="share.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="frame masthead-inner">
+      <div class="wordmark">
+        <span class="logo"><img src="assets/sitcon-white.svg" alt="SITCON"></span>
+        <span class="game-name" lang="en">Color Challenge</span>
+      </div>
+      <button class="help-button" id="help-button" type="button">
+        <span class="help-icon" aria-hidden="true">?</span>玩法說明
+      </button>
+    </div>
+  </header>
+
+  <main class="frame">
+    <section id="play" aria-labelledby="play-title">
+      <header class="intro">
+        <h1 id="play-title" tabindex="-1">調出 <span class="title-mark">SITCON 綠</span></h1>
+        <p>用色盤和明度調整左邊的 SITCON Logo，試著配出右邊的標準綠。</p>
+      </header>
+
+      <form id="guess-form" class="workbench">
+        <section class="sample-panel" aria-labelledby="sample-title">
+          <div class="sample-heading">
+            <h2 id="sample-title">SITCON Logo 配色</h2>
+            <div class="clock-controls">
+              <span id="countdown" role="timer" aria-label="剩餘時間" hidden></span>
+              <button id="toggle-time" class="quiet-button" type="button">開始 30 秒挑戰</button>
+            </div>
+          </div>
+          <div class="sample-stage">
+            <div class="sample-pair">
+              <figure>
+                <svg class="sample-mark" viewBox="0 0 193.6 261.6" role="img" aria-label="套用你的選色的 SITCON Logo">
+                  <mask id="sitcon-logo-mask" mask-type="alpha">
+                    <image href="assets/logo.svg" width="100%" height="100%"/>
+                  </mask>
+                  <rect id="guess-ink" width="100%" height="100%" mask="url(#sitcon-logo-mask)"/>
+                </svg>
+                <figcaption>你的選色</figcaption>
+              </figure>
+              <figure>
+                <!-- Embed assets/logo.svg verbatim so the same image can be exported from file://. -->
+                <img id="official-logo" class="sample-mark" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCAxOTMuNiAyNjEuNiIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMTkzLjYgMjYxLjYiIHhtbDpzcGFjZT0icHJlc2VydmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6Y2M9Imh0dHA6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL25zIyIgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTQ5MSAtMTQ1LjMpIiBmaWxsPSIjNzdCNTVBIj4KICAgICAgICA8cGF0aCBkPSJtNjE3LjQgMTcyLjJjMTIuOS05LjkgMjguMy02LjIgMjguMy02LjJzLTIuNiAxOC4zLTE1LjUgMjguMi0zMS40IDcuNS0zMS40IDcuNSA0LTYgOC0xMy45YzIuNC00LjYgNS44LTEyIDEwLjYtMTUuNnoiIC8+CiAgICAgICAgPHBhdGggZD0ibTU4Ni4zIDE4Ny4xYy02LTQuNi0xMy4yLTIuOS0xMy4yLTIuOXMxLjIgOC42IDcuMiAxMy4yIDE0LjYgMy41IDE0LjYgMy41LTEuOS0yLjgtMy43LTYuNWMtMS4xLTIuMi0yLjctNS42LTQuOS03LjN6IiAvPgogICAgICAgIDxwYXRoIGQ9Im01ODcuOCAyMzAuOGMxLjggMCAzLjUgMC4xIDUuMyAwLjItMS42LTkuNC0xLjMtMTkuMSAzLjYtMjcuNS04LjUgNi44LTEyLjYgMTcuMi0xNC43IDI3LjYgMS45LTAuMiAzLjgtMC4zIDUuOC0wLjN6IiAvPgogICAgICAgIDxwYXRoIGQ9Im01ODcuOCAyMzMuOWMtNDIuNCAwLTc2LjggMzQuMy03Ni44IDc2LjUgMCA0Mi4zIDM0LjQgNzYuNSA3Ni44IDc2LjVzNzYuOC0zNC4zIDc2LjgtNzYuNWMtMC4xLTQyLjItMzQuNC03Ni41LTc2LjgtNzYuNXptMzEuMyAxMDcuOC0zMS40LTIxLjUtMzEuNCAyMS41IDIxLjYtMzEuMy0yMS42LTMxLjMgMzEuNCAyMS41IDMxLjQtMjEuNS0yMS42IDMxLjN6IiAvPgogICAgPC9nPgo8L3N2Zz4K" width="194" height="262" alt="標準綠的 SITCON Logo">
+                <figcaption>SITCON 標準綠</figcaption>
+              </figure>
+            </div>
+          </div>
+        </section>
+        <section class="instrument" aria-labelledby="wheel-title">
+          <header class="instrument-header">
+            <h2 id="wheel-title"><span class="dial-icon" aria-hidden="true"></span>全彩色盤</h2>
+            <span class="dial-hint">越靠外圈越飽和</span>
+          </header>
+          <div class="wheel-stage">
+            <div class="dial">
+              <span class="angle north" aria-hidden="true">紅</span>
+              <span class="angle east" aria-hidden="true">黃綠</span>
+              <span class="angle south" aria-hidden="true">青</span>
+              <span class="angle west" aria-hidden="true">紫</span>
+              <div class="wheel" id="wheel" role="group" tabindex="0" aria-label="色相與飽和度"
+                   aria-describedby="wheel-keys">
+                <span class="cursor" id="cursor"></span>
+              </div>
+            </div>
+            <span class="visually-hidden" id="wheel-keys">左右方向鍵調整色相，上下方向鍵調整飽和度。按住 Shift 可微調。</span>
+          </div>
+          <div class="value-control">
+            <div class="value-label"><label for="brightness">明度</label><span>由暗到亮</span></div>
+            <input id="brightness" type="range" min="0" max="255" step="1">
+          </div>
+        </section>
+
+        <button class="action guess-submit" type="submit"><span class="target-icon" aria-hidden="true"></span>送出選色，揭曉色差</button>
+      </form>
+    </section>
+
+    <section id="result" hidden aria-labelledby="result-title">
+      <header class="intro">
+        <h1 id="result-title" tabindex="-1">你的挑戰結果</h1>
+        <p id="grade-line"></p>
+      </header>
+      <div class="result-layout">
+        <section class="score-panel" aria-labelledby="score-title">
+          <div class="score-heading"><h2 id="score-title">RGB 距離</h2><span id="result-mode"></span></div>
+          <div class="score-value"><strong class="distance" id="distance"></strong><strong id="grade"></strong></div>
+          <p id="color-rank"></p>
+          <details class="score-guide" id="score-guide">
+            <summary>這個距離怎麼看？</summary>
+            <p>每個色值都是 0–255。只有紅色差 5 格，距離就是 5。若紅、綠、藍各差 5 格，距離約為 8.7。</p>
+            <dl id="grade-scale" aria-label="遊戲距離分級，由小到大"></dl>
+            <p>分級採顯示到小數一位的距離。<span id="rank-detail"></span></p>
+          </details>
+          <div class="difference">
+            <h3>紅、綠、藍各差多少？</h3>
+            <p>正數表示你的色值偏高，負數表示偏低。</p>
+            <dl class="channel-row">
+              <div><dt>R</dt><dd id="red-diff"></dd></div>
+              <div><dt>G</dt><dd id="green-diff"></dd></div>
+              <div><dt>B</dt><dd id="blue-diff"></dd></div>
+            </dl>
+          </div>
+          <div class="result-actions">
+            <button type="button" class="action" id="share-result">分享成績</button>
+            <button type="button" class="quiet-button" id="replay">再玩一次</button>
+          </div>
+        </section>
+        <section class="comparison" aria-label="兩張色票比較">
+          <div class="comparison-pair">
+            <div class="result-card">
+              <div class="result-ink" id="result-ink"></div>
+              <div class="result-caption"><h2>你的選色</h2><strong id="result-hex"></strong><span>RGB <bdi id="result-rgb"></bdi></span></div>
+            </div>
+            <div class="result-card">
+              <div class="result-ink" id="official-ink"></div>
+              <div class="result-caption"><h2>SITCON 標準綠</h2><strong id="official-hex"></strong><span>RGB <bdi id="official-rgb"></bdi></span></div>
+            </div>
+          </div>
+          <a class="source-link" href="https://sitcon.org/branding/">SITCON 品牌使用規範</a>
+        </section>
+      </div>
+    </section>
+    <noscript><p>請開啟 JavaScript 以使用色盤和計算色差。</p></noscript>
+  </main>
+
+  <dialog id="help" aria-labelledby="help-title">
+    <h2 id="help-title">玩法說明</h2>
+    <ol>
+      <li>看著右邊的 SITCON 標準綠，在色盤上點選或拖曳，左邊的 SITCON Logo 會跟著變色。越靠近外圈，顏色越飽和。</li>
+      <li>左右拖曳明度滑桿，調整 SITCON Logo 的深淺。</li>
+      <li>送出後揭曉雙方的色碼。RGB 距離是將紅、綠、藍的差值各自平方，相加後再開根號。距離越小，配色越準。</li>
+    </ol>
+    <p>按「開始 30 秒挑戰」會重新抽色並倒數，可以提早送出，時間到就會自動結算。</p>
+    <p>用鍵盤玩時，在色盤上按左右鍵調色相，上下鍵調飽和度。按住 Shift 搭配方向鍵可以微調。</p>
+    <form method="dialog"><button class="action">回到遊戲</button></form>
+  </dialog>
+  <dialog id="share-dialog" aria-labelledby="share-title">
+    <header class="share-heading">
+      <h2 id="share-title">分享這一局</h2>
+      <form method="dialog"><button class="quiet-button" aria-label="關閉分享，回到結果">關閉</button></form>
+    </header>
+    <div class="share-body">
+      <img id="share-preview" width="1080" height="1920" alt="本局成績圖" hidden>
+      <div>
+        <fieldset class="share-options" id="share-options" aria-label="圖片分享目的地" disabled>
+          <button class="quiet-button" type="button" data-app="Instagram" data-url="https://www.instagram.com/">分享到 Instagram 限時動態</button>
+          <button class="quiet-button" type="button" data-app="Threads" data-url="https://www.threads.com/intent/post">Threads</button>
+          <button class="quiet-button" type="button" data-app="LINE" data-url="https://line.me/R/nv/chat">LINE</button>
+          <button class="quiet-button" type="button" id="native-share" data-app="" hidden>其他 App</button>
+        </fieldset>
+        <p id="share-status" role="status"></p>
+        <div class="share-links">
+          <a id="download-card" download hidden>下載限動圖（9:16）</a>
+          <a id="download-post" download hidden>下載貼文圖（4:5）</a>
+          <button id="copy-game-link" type="button" hidden>複製挑戰連結</button>
+          <a id="open-share-app" target="_blank" rel="noopener noreferrer" hidden></a>
+        </div>
+        <details id="share-caption">
+          <summary>分享文字</summary>
+          <textarea id="share-text" aria-label="成績分享文字" rows="4" readonly></textarea>
+          <button class="quiet-button" id="copy-result" type="button" command="--copy" commandfor="share-text">複製文字</button>
+        </details>
+      </div>
+    </div>
+  </dialog>
+</body>
+</html>
