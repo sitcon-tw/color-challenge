@@ -21,6 +21,12 @@ function randomStartingColor() {
   };
 }
 
+function colorAtWheelPoint(x, y, previousHue) {
+  const saturation = Math.min(1, Math.hypot(x, y));
+  const hue = saturation < 1e-12 ? previousHue : (Math.atan2(x, -y) * 180 / Math.PI + 360) % 360;
+  return { hue, saturation };
+}
+
 // Hue runs clockwise in degrees, saturation from 0 to 1, and value from 0 to 255.
 function hsvToRgb({ hue, saturation, value }) {
   const sector = (hue % 360) / 60;

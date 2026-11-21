@@ -92,6 +92,31 @@ h1:focus { outline: 0; }
   transform: rotate(-1.7deg);
 }
 .intro p { margin-top: .75rem; color: var(--muted); line-height: 1.65; }
+.round-setup { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem 1rem; margin-bottom: 1rem; }
+.mode-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(100%, 16rem);
+  min-width: 0;
+  margin: 0;
+  padding: .2rem;
+  border: 1px solid var(--rule);
+  border-radius: .55rem;
+  background: white;
+}
+.mode-options label { position: relative; }
+.mode-options span {
+  display: grid;
+  place-items: center;
+  min-height: 2.75rem;
+  border-radius: .35rem;
+  font-size: .9rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+.mode-options input:checked + span { background: var(--ink); color: white; }
+.mode-options input:focus-visible + span { outline: 3px solid #865519; outline-offset: 1px; }
+#mode-hint { color: var(--muted); font-size: .9rem; line-height: 1.5; }
 h2 { gap: .65rem; font-size: 1.15rem; font-weight: 750; line-height: 1.4; }
 .workbench, .result-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(19rem, 1fr); gap: 1.25rem; }
 .workbench { grid-template-areas: "wheel samples" "wheel submit"; grid-template-rows: 1fr auto; }
@@ -215,13 +240,18 @@ h2 { gap: .65rem; font-size: 1.15rem; font-weight: 750; line-height: 1.4; }
   background: #fff;
 }
 .sample-panel { grid-area: samples; }
-.sample-heading, .clock-controls, .score-heading, .score-value, .result-actions {
+.score-heading, .score-value, .result-actions {
   display: flex;
   align-items: center;
   gap: .65rem;
 }
-.sample-heading, .score-heading { justify-content: space-between; flex-wrap: wrap; }
-.clock-controls { flex-wrap: wrap; }
+.score-heading { justify-content: space-between; flex-wrap: wrap; }
+.sample-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .6rem; }
+.round-clock { display: flex; align-items: baseline; gap: .35rem; white-space: nowrap; }
+#clock-label { font-size: .875rem; color: var(--muted); }
+#clock-value { width: 7ch; text-align: right; font: 700 1rem/1.4 var(--mono); font-variant-numeric: tabular-nums; }
+[data-mode="timed"] #clock-value { width: 5ch; }
+#clock-value.last-seconds { text-decoration: underline 3px #a55813; text-underline-offset: .2em; }
 .quiet-button {
   display: inline-flex;
   align-items: center;
@@ -238,8 +268,6 @@ h2 { gap: .65rem; font-size: 1.15rem; font-weight: 750; line-height: 1.4; }
   text-decoration: none;
 }
 .quiet-button:hover:not([data-app="Instagram"]) { background: var(--paper); }
-#countdown { font: 700 1rem var(--mono); white-space: nowrap; }
-#countdown.last-seconds { border-bottom: 3px solid #a55813; }
 .sample-stage, .comparison {
   background-color: #ecefe7;
   background-image: linear-gradient(#cdd3c655 1px, transparent 1px), linear-gradient(90deg, #cdd3c655 1px, transparent 1px);
@@ -375,9 +403,6 @@ dialog p + p { margin-top: .6rem; }
   .sample-pair { padding: 0; border: 0; box-shadow: none; }
   .sample-mark { height: var(--mobile-logo-height); }
   .sample-pair figcaption { padding: .2rem 0 0; font-size: .875rem; }
-  .sample-heading { gap: .3rem .6rem; }
-  .clock-controls { gap: .4rem; }
-  .clock-controls button { min-height: 2.75rem; padding: .3rem .55rem; }
   .result-ink { height: clamp(7rem, 32vw, 10rem); }
 }
 @media (max-width: 47rem) and (min-height: 35rem) {
@@ -395,6 +420,7 @@ dialog p + p { margin-top: .6rem; }
   .comparison-pair { gap: .4rem; }
 }
 @media (forced-colors: active) {
+  .mode-options input:checked + span { outline: 2px solid Highlight; outline-offset: -3px; }
   .wheel, #brightness, .sample-mark, .result-ink { forced-color-adjust: none; }
   .wheel:focus-visible, #brightness:focus-visible { outline-color: Highlight; }
   .cursor { forced-color-adjust: none; }

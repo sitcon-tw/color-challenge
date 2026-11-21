@@ -4,13 +4,13 @@ const byId = id => document.getElementById(id);
 const wheel = byId("wheel");
 const cursor = byId("cursor");
 const brightness = byId("brightness");
-const roundDuration = 30_000;
-let selection = randomStartingColor();
-let deadline = null;
-let clock;
+const modes = byId("modes");
+let round;
+let clock = null;
+let dragPointer = null;
 
 function renderSelection() {
-  const { hue, saturation, value } = selection;
+  const { hue, saturation, value } = round.selection;
   const angle = hue * Math.PI / 180;
   cursor.style.left = (50 + Math.sin(angle) * saturation * 50) + "%";
   cursor.style.top = (50 - Math.cos(angle) * saturation * 50) + "%";
@@ -18,49 +18,51 @@ function renderSelection() {
 
   brightness.value = value;
   brightness.setAttribute("aria-valuetext", Math.round(value / 255 * 100) + "%");
-  brightness.style.setProperty("--bright-end", hexColor(hsvToRgb({ ...selection, value: 255 })));
-  byId("guess-ink").setAttribute("fill", hexColor(hsvToRgb(selection)));
+  brightness.style.setProperty("--bright-end", hexColor(hsvToRgb({ ...round.selection, value: 255 })));
+  byId("guess-ink").setAttribute("fill", hexColor(hsvToRgb(round.selection)));
+}
+
+function pick(values) {
+  if (byId("play").hidden) return;
+  const now = Date.now();
+  if (round.expired(now)) return finishRound(now);
+  if (!round.pick(values, now)) return;
+  renderSelection();
+  if (clock === null) clock = setInterval(updateClock, 200);
 }
 
 function pickFromWheel(event) {
-  if (!canAdjust()) return;
   const bounds = wheel.getBoundingClientRect();
   const x = (event.clientX - bounds.left) / bounds.width * 2 - 1;
   const y = (event.clientY - bounds.top) / bounds.height * 2 - 1;
-  selection.saturation = Math.min(1, Math.hypot(x, y));
-  if (selection.saturation > 0) {
-    selection.hue = (Math.atan2(x, -y) * 180 / Math.PI + 360) % 360;
-  }
-  renderSelection();
+  pick(colorAtWheelPoint(x, y, round.selection.hue));
 }
 
 wheel.addEventListener("pointerdown", event => {
   if (!event.isPrimary || event.button !== 0) return;
   wheel.focus({ preventScroll: true });
-  wheel.setPointerCapture(event.pointerId);
+  dragPointer = event.pointerId;
+  wheel.setPointerCapture(dragPointer);
   pickFromWheel(event);
 });
 wheel.addEventListener("pointermove", event => {
-  if (wheel.hasPointerCapture(event.pointerId)) pickFromWheel(event);
+  if (dragPointer === event.pointerId && wheel.hasPointerCapture(dragPointer)) pickFromWheel(event);
 });
+
 wheel.addEventListener("keydown", event => {
-  if (!canAdjust()) return;
+  let { hue, saturation } = round.selection;
   const step = event.shiftKey ? 0.1 : 1;
   switch (event.key) {
-    case "ArrowLeft": selection.hue = (selection.hue + 360 - step) % 360; break;
-    case "ArrowRight": selection.hue = (selection.hue + step) % 360; break;
-    case "ArrowUp": selection.saturation = Math.min(1, selection.saturation + step / 100); break;
-    case "ArrowDown": selection.saturation = Math.max(0, selection.saturation - step / 100); break;
+    case "ArrowLeft": hue = (hue + 360 - step) % 360; break;
+    case "ArrowRight": hue = (hue + step) % 360; break;
+    case "ArrowUp": saturation = Math.min(1, saturation + step / 100); break;
+    case "ArrowDown": saturation = Math.max(0, saturation - step / 100); break;
     default: return;
   }
   event.preventDefault();
-  renderSelection();
+  pick({ hue, saturation });
 });
-brightness.addEventListener("input", () => {
-  if (!canAdjust()) return;
-  selection.value = brightness.valueAsNumber;
-  renderSelection();
-});
+brightness.addEventListener("input", () => pick({ value: brightness.valueAsNumber }));
 
 function switchScreen(showResult) {
   byId("play").hidden = showResult;
@@ -76,48 +78,39 @@ function showSwatch(prefix, rgb) {
   byId(prefix + "-rgb").textContent = rgb.join(", ");
 }
 
-function canAdjust() {
-  if (byId("play").hidden) return false;
-  if (deadline !== null && Date.now() >= deadline) {
-    finishRound();
-    return false;
-  }
-  return true;
-}
-
 function updateClock() {
-  if (deadline === null || !canAdjust()) return;
-  const seconds = Math.ceil(Math.min(roundDuration, Math.max(0, deadline - Date.now())) / 1000);
-  byId("countdown").textContent = seconds + " 秒";
-  byId("countdown").classList.toggle("last-seconds", seconds <= 5);
+  if (byId("play").hidden) return;
+  const now = Date.now();
+  if (round.expired(now)) return finishRound(now);
+  const elapsed = round.elapsed(now);
+  const timed = round.mode === "timed";
+  const seconds = timed ? Math.ceil((ROUND_DURATION - elapsed) / 1000) : Math.floor(elapsed / 1000);
+  const display = timed ? seconds + " 秒" : Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0");
+  const value = byId("clock-value");
+  if (value.textContent !== display) value.textContent = display;
+  value.classList.toggle("last-seconds", timed && seconds <= 5);
 }
 
-function beginRound(timed) {
+function beginRound() {
   clearInterval(clock);
-  selection = randomStartingColor();
+  clock = null;
+  dragPointer = null;
+  const choice = modes.querySelector(":checked");
+  round = new Round(choice.value, randomStartingColor());
+  byId("mode-hint").textContent = choice.dataset.hint;
+  byId("guess-form").dataset.mode = round.mode;
+  byId("clock-label").textContent = round.mode === "timed" ? "剩餘" : "用時";
   renderSelection();
   if (byId("play").hidden) switchScreen(false);
-  deadline = timed ? Date.now() + roundDuration : null;
-  byId("countdown").hidden = !timed;
-  byId("toggle-time").textContent = timed ? "改玩不限時" : "開始 30 秒挑戰";
-  if (timed) {
-    updateClock();
-    clock = setInterval(updateClock, 200);
-  }
+  updateClock();
 }
 
-function finishRound() {
+function finishRound(now = Date.now()) {
   if (byId("play").hidden) return;
   clearInterval(clock);
-  const remaining = deadline === null ? null : Math.min(roundDuration, Math.max(0, deadline - Date.now()));
-  const mode = remaining === null ? "不限時" : "30 秒挑戰";
-  let modeSummary = mode;
-  if (remaining !== null) {
-    const elapsed = Math.floor((roundDuration - remaining) / 100) / 10;
-    if (remaining === 0) modeSummary += " · 時間到";
-    else modeSummary += elapsed === 0 ? " · 用時不到 0.1 秒" : ` · 用時 ${elapsed} 秒`;
-  }
-  const rgb = hsvToRgb(selection);
+  const modeLabel = modes.querySelector(":checked").labels[0].textContent.trim();
+  const modeSummary = modeLabel + " · " + round.resultTime(now);
+  const rgb = hsvToRgb(round.selection);
   const { differences, distance } = compareWithSitcon(rgb);
   const { displayed, grade } = describeScore(distance);
   const rank = rankAmongRgbColors(differences);
@@ -135,7 +128,7 @@ function finishRound() {
     const delta = differences[index];
     byId(id).textContent = delta > 0 ? "+" + delta : String(delta);
   });
-  byId("replay").textContent = deadline === null ? "再玩一次" : "再挑戰 30 秒";
+  byId("replay").textContent = round.mode === "timed" ? "再挑戰 30 秒" : "再玩一次";
   prepareShare({ rgb, grade, displayed, differences, mode: modeSummary });
   if (byId("help").open) byId("help").close();
   switchScreen(true);
@@ -145,10 +138,8 @@ byId("guess-form").addEventListener("submit", event => {
   event.preventDefault();
   finishRound();
 });
-byId("toggle-time").addEventListener("click", () => {
-  if (canAdjust()) beginRound(deadline === null);
-});
-byId("replay").addEventListener("click", () => beginRound(deadline !== null));
+modes.addEventListener("change", beginRound);
+byId("replay").addEventListener("click", beginRound);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) updateClock();
 });
@@ -163,4 +154,4 @@ GRADES.forEach(({ max, name }, index) => {
   row.append(range, label);
   byId("grade-scale").append(row);
 });
-renderSelection();
+beginRound();

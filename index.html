@@ -14,6 +14,7 @@
   <title>SITCON Color Challenge｜調出 SITCON 綠</title>
   <link rel="stylesheet" href="style.css">
   <script defer src="color.js"></script>
+  <script defer src="round.js"></script>
   <script defer src="game.js"></script>
   <script defer src="share.js"></script>
 </head>
@@ -37,14 +38,19 @@
         <p>用色盤和明度調整左邊的 SITCON Logo，試著配出右邊的標準綠。</p>
       </header>
 
+      <div class="round-setup">
+        <fieldset id="modes" class="mode-options" aria-describedby="mode-hint">
+          <legend class="visually-hidden">挑戰模式</legend>
+          <label><input class="visually-hidden" type="radio" name="mode" value="normal" data-hint="第一次調色開始計時，調好就能送出。" checked><span>一般模式</span></label>
+          <label><input class="visually-hidden" type="radio" name="mode" value="timed" data-hint="第一次調色後倒數 30 秒。可以提早送出，時間到自動揭曉。"><span>30 秒挑戰</span></label>
+        </fieldset>
+        <p id="mode-hint" role="status">第一次調色開始計時，調好就能送出。</p>
+      </div>
       <form id="guess-form" class="workbench">
         <section class="sample-panel" aria-labelledby="sample-title">
           <div class="sample-heading">
             <h2 id="sample-title">SITCON Logo 配色</h2>
-            <div class="clock-controls">
-              <span id="countdown" role="timer" aria-label="剩餘時間" hidden></span>
-              <button id="toggle-time" class="quiet-button" type="button">開始 30 秒挑戰</button>
-            </div>
+            <span class="round-clock" role="timer"><span id="clock-label">用時</span> <b id="clock-value">0:00</b></span>
           </div>
           <div class="sample-stage">
             <div class="sample-pair">
@@ -77,7 +83,7 @@
               <span class="angle south" aria-hidden="true">青</span>
               <span class="angle west" aria-hidden="true">紫</span>
               <div class="wheel" id="wheel" role="group" tabindex="0" aria-label="色相與飽和度"
-                   aria-describedby="wheel-keys">
+                   aria-describedby="wheel-keys mode-hint">
                 <span class="cursor" id="cursor"></span>
               </div>
             </div>
@@ -85,7 +91,7 @@
           </div>
           <div class="value-control">
             <div class="value-label"><label for="brightness">明度</label><span>由暗到亮</span></div>
-            <input id="brightness" type="range" min="0" max="255" step="1">
+            <input id="brightness" type="range" min="0" max="255" step="1" aria-describedby="mode-hint">
           </div>
         </section>
 
@@ -148,7 +154,7 @@
       <li>左右拖曳明度滑桿，調整 SITCON Logo 的深淺。</li>
       <li>送出後揭曉雙方的色碼。RGB 距離是將紅、綠、藍的差值各自平方，相加後再開根號。距離越小，配色越準。</li>
     </ol>
-    <p>按「開始 30 秒挑戰」會重新抽色並倒數，可以提早送出，時間到就會自動結算。</p>
+    <p>切換模式會重新抽色。一般模式從第一次調整色盤或明度開始計時，30 秒挑戰則從那一刻開始倒數。時間到會自動結算。</p>
     <p>用鍵盤玩時，在色盤上按左右鍵調色相，上下鍵調飽和度。按住 Shift 搭配方向鍵可以微調。</p>
     <form method="dialog"><button class="action">回到遊戲</button></form>
   </dialog>

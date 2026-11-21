@@ -69,11 +69,11 @@ function makeScoreImage({ rgb, grade, displayed, mode, invitation, colorNote }, 
   rect(0, scoreTop, canvas.width, canvas.height - top - scoreTop, ink);
   label(grade.verdict, 67, scoreTop + 110, 82, 800, accent);
   label(colorNote, 72, scoreTop + 177, 37, 550, "white");
-  label(`本局稱號「${grade.name}」`, 72, scoreTop + 254, 35, 500, "#e0e7df");
+  label(`本局稱號「${grade.name}」`, 72, scoreTop + 254, 35, 500, "#e0e7df", 445);
   ctx.textAlign = "right";
   label(`RGB 距離 ${displayed}`, 1008, scoreTop + 99, 41, 650, "white");
   label("0 就是同色", 1008, scoreTop + 163, 33, 500, "white");
-  label(mode, 1008, scoreTop + 254, 33, 500, "#e0e7df");
+  label(mode, 1008, scoreTop + 254, 33, 500, "#e0e7df", 470);
   ctx.textAlign = "left";
   rect(72, scoreTop + 291, 936, 2, "#65716a");
   label(invitation, 72, scoreTop + 386, 49, 650, "white");
