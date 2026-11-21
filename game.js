@@ -10,11 +10,11 @@ let clock = null;
 let dragPointer = null;
 
 function renderSelection() {
-  const { hue, saturation, value } = round.selection;
+  const { hue, saturation, value } = round.aim;
   const angle = hue * Math.PI / 180;
   cursor.style.left = (50 + Math.sin(angle) * saturation * 50) + "%";
   cursor.style.top = (50 - Math.cos(angle) * saturation * 50) + "%";
-  wheel.style.setProperty("--shade", 1 - value / 255);
+  wheel.style.setProperty("--shade", 1 - round.selection.value / 255);
 
   brightness.value = value;
   brightness.setAttribute("aria-valuetext", Math.round(value / 255 * 100) + "%");
@@ -22,35 +22,60 @@ function renderSelection() {
   byId("guess-ink").setAttribute("fill", hexColor(hsvToRgb(round.selection)));
 }
 
-function pick(values) {
+function renderLocks() {
+  const wheelLocked = round.locked.has("wheel");
+  wheel.setAttribute("aria-disabled", String(wheelLocked));
+  wheel.tabIndex = wheelLocked ? -1 : 0;
+  brightness.disabled = round.locked.has("brightness");
+  byId("wheel-hint").textContent = wheelLocked ? "色盤已鎖定" : "越靠外圈越飽和";
+  byId("brightness-hint").textContent = brightness.disabled ? "明度已鎖定" : "由暗到亮";
+}
+
+function pick(control, values, lock = false) {
   if (byId("play").hidden) return;
   const now = Date.now();
   if (round.expired(now)) return finishRound(now);
-  if (!round.pick(values, now)) return;
+  if (!round.pick(control, values, lock, now)) return;
   renderSelection();
+  if (round.locked.size === 2) return finishRound(now);
+  if (round.locked.has(control)) renderLocks();
   if (clock === null) clock = setInterval(updateClock, 200);
 }
 
-function pickFromWheel(event) {
+function pickFromWheel(event, lock) {
   const bounds = wheel.getBoundingClientRect();
   const x = (event.clientX - bounds.left) / bounds.width * 2 - 1;
   const y = (event.clientY - bounds.top) / bounds.height * 2 - 1;
-  pick(colorAtWheelPoint(x, y, round.selection.hue));
+  pick("wheel", colorAtWheelPoint(x, y, round.aim.hue), lock);
 }
 
 wheel.addEventListener("pointerdown", event => {
-  if (!event.isPrimary || event.button !== 0) return;
+  if (!event.isPrimary || event.button !== 0 || wheel.tabIndex < 0) return;
   wheel.focus({ preventScroll: true });
-  dragPointer = event.pointerId;
-  wheel.setPointerCapture(dragPointer);
-  pickFromWheel(event);
+  if (round.mode !== "oneshot") {
+    dragPointer = event.pointerId;
+    wheel.setPointerCapture(dragPointer);
+  }
+  pickFromWheel(event, true);
 });
 wheel.addEventListener("pointermove", event => {
-  if (dragPointer === event.pointerId && wheel.hasPointerCapture(dragPointer)) pickFromWheel(event);
+  if (dragPointer === event.pointerId && wheel.hasPointerCapture(dragPointer)) pickFromWheel(event, false);
 });
 
+function lockFromKeyboard(event, control, values) {
+  if (round.mode !== "oneshot" || (event.key !== "Enter" && event.key !== " ")) return false;
+  event.preventDefault();
+  if (!event.repeat && !round.locked.has(control)) {
+    pick(control, values, true);
+    if (!byId("play").hidden) (control === "wheel" ? brightness : wheel).focus();
+  }
+  return true;
+}
+
 wheel.addEventListener("keydown", event => {
-  let { hue, saturation } = round.selection;
+  if (wheel.tabIndex < 0) return;
+  let { hue, saturation } = round.aim;
+  if (lockFromKeyboard(event, "wheel", { hue, saturation })) return;
   const step = event.shiftKey ? 0.1 : 1;
   switch (event.key) {
     case "ArrowLeft": hue = (hue + 360 - step) % 360; break;
@@ -60,9 +85,19 @@ wheel.addEventListener("keydown", event => {
     default: return;
   }
   event.preventDefault();
-  pick({ hue, saturation });
+  pick("wheel", { hue, saturation });
 });
-brightness.addEventListener("input", () => pick({ value: brightness.valueAsNumber }));
+brightness.addEventListener("input", () => pick("brightness", { value: brightness.valueAsNumber }));
+brightness.addEventListener("keydown", event => lockFromKeyboard(event, "brightness", { value: brightness.valueAsNumber }));
+brightness.addEventListener("pointerdown", event => {
+  if (round.mode !== "oneshot" || !event.isPrimary || event.button !== 0) return;
+  event.preventDefault();
+  // The range is two thumbs tall. Its center-to-center travel excludes one thumb.
+  const bounds = brightness.getBoundingClientRect();
+  const thumb = bounds.height / 2;
+  const position = (event.clientX - bounds.left - thumb / 2) / (bounds.width - thumb);
+  pick("brightness", { value: Math.round(255 * Math.max(0, Math.min(1, position))) }, true);
+});
 
 function switchScreen(showResult) {
   byId("play").hidden = showResult;
@@ -99,7 +134,9 @@ function beginRound() {
   round = new Round(choice.value, randomStartingColor());
   byId("mode-hint").textContent = choice.dataset.hint;
   byId("guess-form").dataset.mode = round.mode;
+  byId("submit-guess").hidden = round.mode === "oneshot";
   byId("clock-label").textContent = round.mode === "timed" ? "剩餘" : "用時";
+  renderLocks();
   renderSelection();
   if (byId("play").hidden) switchScreen(false);
   updateClock();
@@ -129,14 +166,14 @@ function finishRound(now = Date.now()) {
     byId(id).textContent = delta > 0 ? "+" + delta : String(delta);
   });
   byId("replay").textContent = round.mode === "timed" ? "再挑戰 30 秒" : "再玩一次";
-  prepareShare({ rgb, grade, displayed, differences, mode: modeSummary });
+  prepareShare({ rgb, grade, displayed, differences, mode: modeSummary, kind: round.mode });
   if (byId("help").open) byId("help").close();
   switchScreen(true);
 }
 
 byId("guess-form").addEventListener("submit", event => {
   event.preventDefault();
-  finishRound();
+  if (round.mode !== "oneshot") finishRound();
 });
 modes.addEventListener("change", beginRound);
 byId("replay").addEventListener("click", beginRound);

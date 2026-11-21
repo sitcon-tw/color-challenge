@@ -6,6 +6,8 @@ class Round {
   constructor(mode, color) {
     this.mode = mode;
     this.selection = { ...color };
+    this.aim = { ...color };
+    this.locked = new Set();
     this.startedAt = null;
   }
 
@@ -17,13 +19,17 @@ class Round {
     return this.mode === "timed" && this.elapsed(now) >= ROUND_DURATION;
   }
 
-  pick(values, now) {
-    if (this.expired(now)) return false;
-    const changed = Object.entries(values).some(([key, value]) => Math.abs(this.selection[key] - value) > 1e-9);
-    if (!changed) return false;
+  pick(control, values, lock, now) {
+    if (this.locked.has(control) || this.expired(now)) return false;
+    const oneShot = this.mode === "oneshot";
+    const locking = oneShot && lock;
+    const changed = Object.entries(values).some(([key, value]) => Math.abs(this.aim[key] - value) > 1e-9);
+    if (!changed && !locking) return false;
 
     this.startedAt ??= now;
-    Object.assign(this.selection, values);
+    Object.assign(this.aim, values);
+    if (!oneShot || locking) Object.assign(this.selection, values);
+    if (locking) this.locked.add(control);
     return true;
   }
 

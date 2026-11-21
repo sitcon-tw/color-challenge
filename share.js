@@ -6,6 +6,9 @@ const shareText = byId("share-text");
 const sharePreview = byId("share-preview");
 const downloads = { story: byId("download-card"), post: byId("download-post") };
 const cardHeights = { story: 1920, post: 1350 };
+const modeRules = {
+  oneshot: "色盤和明度各點一次，按下就鎖定。",
+};
 const copyGameLink = byId("copy-game-link");
 const openApp = byId("open-share-app");
 let shareRound;
@@ -18,14 +21,16 @@ function prepareShare(round) {
   const { mode, grade, displayed } = round;
   round.invitation = displayed === 0 ? "你也能調到距離 0 嗎？" : "你能比我更接近 SITCON 綠嗎？";
   round.colorNote = describeColorDifference(round.differences);
-  const message = `我看著 SITCON 標準綠，挑戰用色盤調出同色。\n${grade.verdict}！${round.colorNote}\nRGB 距離 ${displayed}（0 是同色）· ${mode}\n本局稱號「${grade.name}」。${round.invitation}`;
+  round.rule = modeRules[round.kind] ?? "";
+  const challenge = "我看著 SITCON 標準綠，挑戰用色盤調出同色。" + round.rule;
+  const message = `${challenge}\n${grade.verdict}！${round.colorNote}\nRGB 距離 ${displayed}（0 是同色）· ${mode}\n本局稱號「${grade.name}」。${round.invitation}`;
   const { protocol, hostname, origin, pathname } = location;
   const local = hostname === "localhost" || hostname.endsWith(".localhost") || hostname.startsWith("127.") || hostname === "[::1]";
   round.gameUrl = /^https?:$/.test(protocol) && !local ? origin + pathname : "";
   shareText.value = round.gameUrl ? message + "\n" + round.gameUrl : message;
 }
 
-function makeScoreImage({ rgb, grade, displayed, mode, invitation, colorNote }, format, logo) {
+function makeScoreImage({ rgb, grade, displayed, mode, invitation, colorNote, rule }, format, logo) {
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
   canvas.height = cardHeights[format];
@@ -55,7 +60,7 @@ function makeScoreImage({ rgb, grade, displayed, mode, invitation, colorNote }, 
   ctx.drawImage(logo, 804, 35, 196, 196 * 261.6 / 193.6);
   label("調出 SITCON 綠", 66, 259, 98, 800, ink, 700);
   label("看著右邊的 SITCON 標準綠，", 72, 355, 46, 550, ink);
-  label("我只靠眼力，用色盤調出左邊的答案。", 72, 422, 46, 550, ink);
+  label(rule || "我只靠眼力，用色盤調出左邊的答案。", 72, 422, 46, 550, ink);
 
   const swatches = [[hexColor(rgb), "我調的顏色"], [hexColor(SITCON_GREEN), "SITCON 標準綠"]];
   swatches.forEach(([color, name], index) => {
@@ -96,9 +101,9 @@ async function makeShareCards(round) {
 }
 
 function previewCard(format) {
-  const { cards, mode, grade, displayed, colorNote } = shareRound;
+  const { cards, mode, grade, displayed, colorNote, rule } = shareRound;
   sharePreview.height = cardHeights[format];
-  sharePreview.alt = `${format === "story" ? "限動圖" : "貼文圖"}。對照右邊的 SITCON 標準綠，用色盤調出左邊的顏色。${grade.verdict}！${colorNote}RGB 距離 ${displayed}，${mode}，本局稱號「${grade.name}」。`;
+  sharePreview.alt = `${format === "story" ? "限動圖" : "貼文圖"}。對照右邊的 SITCON 標準綠，用色盤調出左邊的顏色。${rule}${grade.verdict}！${colorNote}RGB 距離 ${displayed}，${mode}，本局稱號「${grade.name}」。`;
   if (sharePreview.src !== cards[format].url) sharePreview.src = cards[format].url;
   sharePreview.hidden = false;
 }

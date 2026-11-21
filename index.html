@@ -43,6 +43,7 @@
           <legend class="visually-hidden">挑戰模式</legend>
           <label><input class="visually-hidden" type="radio" name="mode" value="normal" data-hint="第一次調色開始計時，調好就能送出。" checked><span>一般模式</span></label>
           <label><input class="visually-hidden" type="radio" name="mode" value="timed" data-hint="第一次調色後倒數 30 秒。可以提早送出，時間到自動揭曉。"><span>30 秒挑戰</span></label>
+          <label><input class="visually-hidden" type="radio" name="mode" value="oneshot" data-hint="色盤和明度各點一次，按下就鎖定。用鍵盤可先用方向鍵瞄準，再按 Enter 鎖定。"><span>一發入魂</span></label>
         </fieldset>
         <p id="mode-hint" role="status">第一次調色開始計時，調好就能送出。</p>
       </div>
@@ -74,7 +75,7 @@
         <section class="instrument" aria-labelledby="wheel-title">
           <header class="instrument-header">
             <h2 id="wheel-title"><span class="dial-icon" aria-hidden="true"></span>全彩色盤</h2>
-            <span class="dial-hint">越靠外圈越飽和</span>
+            <span class="dial-hint" id="wheel-hint" role="status">越靠外圈越飽和</span>
           </header>
           <div class="wheel-stage">
             <div class="dial">
@@ -90,12 +91,12 @@
             <span class="visually-hidden" id="wheel-keys">左右方向鍵調整色相，上下方向鍵調整飽和度。按住 Shift 可微調。</span>
           </div>
           <div class="value-control">
-            <div class="value-label"><label for="brightness">明度</label><span>由暗到亮</span></div>
+            <div class="value-label"><label for="brightness">明度</label><span id="brightness-hint" role="status">由暗到亮</span></div>
             <input id="brightness" type="range" min="0" max="255" step="1" aria-describedby="mode-hint">
           </div>
         </section>
 
-        <button class="action guess-submit" type="submit"><span class="target-icon" aria-hidden="true"></span>送出選色，揭曉色差</button>
+        <button id="submit-guess" class="action guess-submit" type="submit"><span class="target-icon" aria-hidden="true"></span>送出選色，揭曉色差</button>
       </form>
     </section>
 
@@ -155,7 +156,8 @@
       <li>送出後揭曉雙方的色碼。RGB 距離是將紅、綠、藍的差值各自平方，相加後再開根號。距離越小，配色越準。</li>
     </ol>
     <p>切換模式會重新抽色。一般模式從第一次調整色盤或明度開始計時，30 秒挑戰則從那一刻開始倒數。時間到會自動結算。</p>
-    <p>用鍵盤玩時，在色盤上按左右鍵調色相，上下鍵調飽和度。按住 Shift 搭配方向鍵可以微調。</p>
+    <p>一發入魂可以先選色盤，也可以先選明度。每個只能點一次，按下就鎖定，兩個都鎖定後立即揭曉。</p>
+    <p>用鍵盤玩時，在色盤上按左右鍵調色相，上下鍵調飽和度。按住 Shift 搭配方向鍵可以微調。一發入魂用 Enter 或空白鍵鎖定。</p>
     <form method="dialog"><button class="action">回到遊戲</button></form>
   </dialog>
   <dialog id="share-dialog" aria-labelledby="share-title">
