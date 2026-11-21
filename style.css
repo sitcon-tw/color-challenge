@@ -93,10 +93,13 @@ h1:focus { outline: 0; }
 }
 .intro p { margin-top: .75rem; color: var(--muted); line-height: 1.65; }
 .round-setup { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem 1rem; margin-bottom: 1rem; }
+.round-note { display: flex; align-items: center; gap: .65rem; }
+#tilt-button { flex: none; min-height: 2.75rem; }
+#tilt-button:disabled, .guess-submit:disabled { opacity: .65; cursor: default; }
 .mode-options {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  width: min(100%, 22rem);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: min(100%, 26rem);
   min-width: 0;
   margin: 0;
   padding: .2rem;
@@ -428,4 +431,7 @@ dialog p + p { margin-top: .6rem; }
   .wheel, #brightness, .sample-mark, .result-ink { forced-color-adjust: none; }
   .wheel:focus-visible, #brightness:focus-visible { outline-color: Highlight; }
   .cursor { forced-color-adjust: none; }
+}
+@media (max-width: 20rem) {
+  .mode-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

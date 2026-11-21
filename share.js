@@ -8,6 +8,7 @@ const downloads = { story: byId("download-card"), post: byId("download-post") };
 const cardHeights = { story: 1920, post: 1350 };
 const modeRules = {
   oneshot: "色盤和明度各點一次，按下就鎖定。",
+  gyro: "我傾斜手機選色，再用滑桿調明度。",
 };
 const copyGameLink = byId("copy-game-link");
 const openApp = byId("open-share-app");

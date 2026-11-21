@@ -8,6 +8,7 @@ const modes = byId("modes");
 let round;
 let clock = null;
 let dragPointer = null;
+let tiltController = null;
 
 function renderSelection() {
   const { hue, saturation, value } = round.aim;
@@ -24,15 +25,17 @@ function renderSelection() {
 
 function renderLocks() {
   const wheelLocked = round.locked.has("wheel");
-  wheel.setAttribute("aria-disabled", String(wheelLocked));
-  wheel.tabIndex = wheelLocked ? -1 : 0;
+  const manualWheel = !wheelLocked && round.mode !== "gyro";
+  wheel.setAttribute("aria-disabled", String(!manualWheel));
+  wheel.tabIndex = manualWheel ? 0 : -1;
   brightness.disabled = round.locked.has("brightness");
-  byId("wheel-hint").textContent = wheelLocked ? "色盤已鎖定" : "越靠外圈越飽和";
+  byId("wheel-hint").textContent = round.mode === "gyro" ? "傾斜手機移動游標" : wheelLocked ? "色盤已鎖定" : "越靠外圈越飽和";
   byId("brightness-hint").textContent = brightness.disabled ? "明度已鎖定" : "由暗到亮";
 }
 
 function pick(control, values, lock = false) {
   if (byId("play").hidden) return;
+  if (round.mode === "gyro" && byId("submit-guess").disabled) return;
   const now = Date.now();
   if (round.expired(now)) return finishRound(now);
   if (!round.pick(control, values, lock, now)) return;
@@ -126,7 +129,35 @@ function updateClock() {
   value.classList.toggle("last-seconds", timed && seconds <= 5);
 }
 
+const tiltMessages = {
+  idle: ["啟用感應", ""],
+  permission: [null, "請在瀏覽器的提示中允許動作感應。"],
+  waiting: [null, "正在校正，請先用舒服的姿勢拿穩手機。"],
+  active: ["重新校正", "朝想選的顏色傾斜手機移動游標，明度用滑桿調整。"],
+  missing: ["重試感應", "還沒收到感應資料。請輕輕傾斜手機，或切換一般模式。"],
+  denied: ["重試感應", "請在瀏覽器允許動作感應後重試，或切換一般模式。"],
+  unsupported: [null, "這個瀏覽器無法讀取動作感應，可以切換一般模式選色。"],
+  insecure: [null, "請用 HTTPS 網址開啟動作感應，或切換一般模式。"],
+};
+
+function setTiltStatus(state) {
+  const [action, hint] = tiltMessages[state];
+  const button = byId("tilt-button");
+  button.textContent = action ?? "啟用感應";
+  button.disabled = !action;
+  if (hint) byId("mode-hint").textContent = hint;
+  brightness.disabled = byId("submit-guess").disabled = state !== "active";
+}
+
+byId("tilt-button").addEventListener("click", () => {
+  tiltController?.abort();
+  tiltController = new AbortController();
+  followTilt(tiltController.signal, () => byId("help").open ? null : round.selection,
+    values => pick("wheel", values), setTiltStatus);
+});
+
 function beginRound() {
+  tiltController?.abort();
   clearInterval(clock);
   clock = null;
   dragPointer = null;
@@ -135,8 +166,14 @@ function beginRound() {
   byId("mode-hint").textContent = choice.dataset.hint;
   byId("guess-form").dataset.mode = round.mode;
   byId("submit-guess").hidden = round.mode === "oneshot";
+  byId("submit-guess").disabled = false;
+  byId("tilt-button").hidden = round.mode !== "gyro";
   byId("clock-label").textContent = round.mode === "timed" ? "剩餘" : "用時";
   renderLocks();
+  if (round.mode === "gyro") {
+    const supported = window.DeviceOrientationEvent && window.DOMMatrix;
+    setTiltStatus(!window.isSecureContext ? "insecure" : supported ? "idle" : "unsupported");
+  }
   renderSelection();
   if (byId("play").hidden) switchScreen(false);
   updateClock();
@@ -144,6 +181,7 @@ function beginRound() {
 
 function finishRound(now = Date.now()) {
   if (byId("play").hidden) return;
+  tiltController?.abort();
   clearInterval(clock);
   const modeLabel = modes.querySelector(":checked").labels[0].textContent.trim();
   const modeSummary = modeLabel + " · " + round.resultTime(now);
@@ -173,7 +211,7 @@ function finishRound(now = Date.now()) {
 
 byId("guess-form").addEventListener("submit", event => {
   event.preventDefault();
-  if (round.mode !== "oneshot") finishRound();
+  if (round.mode !== "oneshot" && !byId("submit-guess").disabled) finishRound();
 });
 modes.addEventListener("change", beginRound);
 byId("replay").addEventListener("click", beginRound);

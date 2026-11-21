@@ -27,6 +27,18 @@ function colorAtWheelPoint(x, y, previousHue) {
   return { hue, saturation };
 }
 
+function colorAfterTilt(origin, right, down) {
+  const length = Math.hypot(right, down);
+  // Ignore about two degrees of hand tremor around the calibrated grip.
+  const deadZone = 0.035;
+  if (length <= deadZone) return { hue: origin.hue, saturation: origin.saturation };
+  const gain = 3 * (1 - deadZone / length);
+  const angle = origin.hue * Math.PI / 180;
+  const x = Math.sin(angle) * origin.saturation + right * gain;
+  const y = -Math.cos(angle) * origin.saturation + down * gain;
+  return colorAtWheelPoint(x, y, origin.hue);
+}
+
 // Hue runs clockwise in degrees, saturation from 0 to 1, and value from 0 to 255.
 function hsvToRgb({ hue, saturation, value }) {
   const sector = (hue % 360) / 60;
@@ -89,4 +101,4 @@ function randomGuessComparison(rank) {
   return `隨機挑一個 RGB 顏色，比你更接近標準綠的機率${odds}。`;
 }
 
-if (typeof module !== "undefined") module.exports = { randomStartingColor, hsvToRgb, hexColor, compareWithSitcon, describeScore, describeColorDifference, rankAmongRgbColors, randomGuessComparison };
+if (typeof module !== "undefined") module.exports = { randomStartingColor, colorAfterTilt, hsvToRgb, hexColor, compareWithSitcon, describeScore, describeColorDifference, rankAmongRgbColors, randomGuessComparison };

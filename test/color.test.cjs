@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
-const { randomStartingColor, hsvToRgb, hexColor, compareWithSitcon, describeScore, describeColorDifference, rankAmongRgbColors, randomGuessComparison } = require("../color.js");
+const { randomStartingColor, colorAfterTilt, hsvToRgb, hexColor, compareWithSitcon, describeScore, describeColorDifference, rankAmongRgbColors, randomGuessComparison } = require("../color.js");
 
 test("a fresh draw changes all three starting controls", t => {
   let draw = 0.25;
@@ -25,6 +25,15 @@ test("the official green is reachable with the wheel and brightness alone", () =
   const guess = hsvToRgb({ hue: 101, saturation: 0.503, value: 181 });
   assert.equal(hexColor(guess), "#77B55A");
   assert.equal(compareWithSitcon(guess).distance, 0);
+});
+
+test("a calibrated tilt ignores hand tremor and can reach the opposite rim", () => {
+  const origin = { hue: 90, saturation: 1, value: 181 };
+  assert.deepEqual(colorAfterTilt(origin, 0.014, -0.02), { hue: 90, saturation: 1 });
+  assert.deepEqual(colorAfterTilt(origin, -0.9, 0), { hue: 270, saturation: 1 });
+  const center = { hue: 45, saturation: 0 };
+  assert.equal(colorAfterTilt(center, 0, 0.25).hue, 180);
+  assert.equal(colorAfterTilt(center, 0.25, 0).hue, 90);
 });
 
 test("the score uses signed guess-minus-target channels and RGB Euclidean distance", () => {
