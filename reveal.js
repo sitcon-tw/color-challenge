@@ -19,6 +19,7 @@ try { soundOn = localStorage.getItem(SOUND_KEY) !== "off"; } catch { /* storage 
 let audioContext = null;
 let current = null;
 let effectsPaused = false;
+let pinObserver = null;
 
 function renderSoundToggle() {
   soundToggle.setAttribute("aria-pressed", String(soundOn));
@@ -183,6 +184,26 @@ function setMapZoom(zoom) {
   if (label.textContent !== text) label.textContent = text;
 }
 
+function separateNearbyPins(guess, target, zoom) {
+  const map = q("map");
+  const pin = q("pin-guess");
+  mapWorld.style.setProperty("--guess-side", guess.x <= target.x ? -1 : 1);
+  pinObserver = new ResizeObserver(() => {
+    const pixelsPerUnit = map.clientWidth * zoom / 100;
+    const head = pin.offsetWidth;
+    // The round head is one diameter wide; its tip extends below the circle.
+    const height = head * (1 + Math.SQRT2) / 2;
+    const clearance = 6; // Two 2px outlines and a small gap.
+    const dx = Math.abs(guess.x - target.x) * pixelsPerUnit;
+    const dy = Math.abs(guess.y - target.y) * pixelsPerUnit;
+    const shift = dy < height + clearance ? Math.max(0, (head + clearance - dx) / 2) : 0;
+    mapWorld.style.setProperty("--pin-shift", shift + "px");
+    mapWorld.classList.toggle("pins-spread", shift > 0);
+  });
+  pinObserver.observe(map);
+  pinObserver.observe(pin);
+}
+
 function setResultMotion(playing) {
   const enabled = playing && !motionPreference.matches;
   revealRoot.toggleAttribute("data-motion", enabled);
@@ -209,6 +230,8 @@ function showFinal({ score, guess, target, valueGuess, valueTarget, zoom }, keep
 function stopReveal() {
   current?.cancel();
   current = null;
+  pinObserver?.disconnect();
+  mapWorld.classList.remove("pins-spread");
   delete revealRoot.dataset.reveal;
   revealRoot.removeAttribute("data-motion");
 }
@@ -221,6 +244,7 @@ function playReveal({ selection, score }) {
   const zoom = fitZoom(guess, target);
   const samePosition = wheelGapPercent(guess, target) === 0;
   mapWorld.classList.toggle("pins-coincide", samePosition);
+  if (!samePosition) separateNearbyPins(guess, target, zoom);
   const focus = fitFocus(mid, zoom);
   mapWorld.style.setProperty("--zoom", zoom);
   mapWorld.style.setProperty("--zx", zoom === 1 ? "0%" : pct(50 - guess.x - zoom * (focus.x - guess.x)));

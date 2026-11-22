@@ -521,10 +521,31 @@ dialog p + p { margin-top: .6rem; }
   transform: rotate(-45deg);
 }
 .pin::before { content: ""; position: absolute; left: 50%; top: calc(var(--size) * 1.207 - 3px); width: 1rem; height: .4rem; margin-left: -.5rem; border-radius: 50%; background: #000a; filter: blur(2px); }
-.pin-target { --pin: #ff4d4d; z-index: 2; }
+.pin-target { --pin: #ff4d4d; --offset: calc(-1 * var(--guess-side) * var(--pin-shift)); z-index: 2; }
 .pin-target i { position: relative; box-shadow: 0 0 0 2px #0e1511, 0 0 18px 4px #ff4d4daa; }
 .pin-target i::after, .vg-mark.target::after { content: ""; position: absolute; inset: 32%; border-radius: 50%; background: #431b20; }
-.pin-guess { --pin: #3ddc84; z-index: 3; }
+.pin-guess { --pin: #3ddc84; --offset: calc(var(--guess-side) * var(--pin-shift)); z-index: 3; }
+.pins-spread .pin i { translate: var(--offset) 0; }
+.pins-spread .pin::before {
+  top: calc(var(--size) * 1.207 - .15rem);
+  z-index: 1;
+  width: .3rem;
+  height: .3rem;
+  margin-left: -.15rem;
+  background: var(--pin);
+  box-shadow: 0 0 0 1px #0e1511;
+  filter: none;
+}
+.pins-spread .pin::after {
+  content: "";
+  position: absolute;
+  left: calc(50% + min(0px, var(--offset)));
+  top: calc(var(--size) * 1.207 - 1px);
+  width: var(--pin-shift);
+  height: 2px;
+  background: var(--pin);
+  box-shadow: 0 0 0 1px #0e1511;
+}
 #result:not([data-reveal]) .pins-coincide .pin-guess i,
 .pins-coincide .pin-target.on + .pin-guess i { background: radial-gradient(circle, #431b20 0 20%, #ff4d4d 22% 43%, var(--pin) 45%); }
 .ripple { position: absolute; left: var(--x); top: var(--y); width: 4rem; height: 4rem; margin: -2rem 0 0 -2rem; border: 2px solid #3ddc84; border-radius: 50%; opacity: 0; pointer-events: none; scale: calc(1 / var(--k)); }
