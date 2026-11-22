@@ -645,17 +645,45 @@ dialog p + p { margin-top: .6rem; }
   box-shadow: 0 0 18px #ffdf7988, inset 0 0 12px #ffdf7944;
   transform: rotate(-6deg);
 }
-.tac-ticker { display: flex; align-items: center; gap: min(.6rem, 4%); margin-top: .8rem; padding-top: .7rem; border-top: 1px dashed #38bdf855; }
+.ticker-track {
+  --ticker-gap: .35rem;
+  container: ticker / inline-size;
+  display: flex;
+  align-items: center;
+  gap: var(--ticker-gap);
+  margin-top: .8rem;
+  padding-top: .7rem;
+  border-top: 1px dashed #38bdf855;
+  color: #cfeaf6;
+  font: 600 .875rem/1.35 var(--mono);
+  white-space: nowrap;
+}
 .flag { display: grid; flex: none; place-items: center; width: 2.1rem; height: 1.45rem; border-radius: .2rem; background: white; box-shadow: 0 0 0 1px #ffffff55, 0 2px 6px #0007; }
 .flag img { height: 1.1rem; width: auto; }
-.ticker-track { flex: 1; min-width: 0; font: 600 .875rem/1.35 var(--mono); color: #cfeaf6; }
-.ticker-track p { display: flex; flex-wrap: wrap; gap: .35rem .75rem; }
-.ticker-track [aria-hidden] { display: none; }
-.ticker-track span {
-  text-box: trim-both cap alphabetic;
-  padding-block: .25em;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
+.ticker-readout {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow: auto hidden;
+  scrollbar-width: thin;
+}
+.ticker-readout:focus-visible { outline-color: var(--accent); }
+#ticker-label, .ticker-readout code { flex: none; padding-inline-end: var(--ticker-gap); }
+.ticker-readout code {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #132b35;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+}
+.ticker-values { display: flex; flex: 1; min-width: 0; gap: var(--ticker-gap); }
+.ticker-values p { display: flex; flex: none; gap: var(--ticker-gap); }
+.ticker-values [aria-hidden] { display: none; }
+@container ticker (max-width: 14rem) {
+  .flag { display: none; }
+  .ticker-readout code { position: static; }
 }
 
 /* Staged reveal. Without data-reveal the final state shows. */
@@ -670,7 +698,7 @@ dialog p + p { margin-top: .6rem; }
 #result[data-reveal="running"] .tac-card:not(.on) { opacity: 0; transform: translateY(2.5rem); }
 #result[data-reveal="running"] .tac-card.on { animation: card-in .5s cubic-bezier(.2, .9, .25, 1.05) both; }
 #result[data-reveal="running"] .stamp:not(.on) { visibility: hidden; }
-#result[data-reveal="running"] .ticker-track:not(.on) { opacity: 0; }
+#result[data-reveal="running"] .ticker-track:not(.on) .ticker-readout:not(:focus) .ticker-values { opacity: 0; }
 #result[data-reveal="running"] .stamp.on { animation: stamp-slam .5s cubic-bezier(.3, 1.4, .5, 1) both; }
 #result[data-reveal="running"] .pin.on { animation: pin-drop .5s cubic-bezier(.5, 0, .9, .5) both; }
 #result[data-reveal="running"] .pin-target.on { animation: pin-pop .5s cubic-bezier(.2, 1.6, .4, 1) both; }
@@ -679,7 +707,7 @@ dialog p + p { margin-top: .6rem; }
 #result[data-reveal="running"] .map-flash.go { animation: flash .7s ease-out both; }
 #result[data-reveal="running"] .map.thump { animation: thump .32s ease-out; }
 #result[data-reveal="running"] .tac-card.thump { animation: thump .32s ease-out; }
-#result[data-reveal="running"] .ticker-track.on { animation: ticker-open .6s steps(24) both; }
+#result[data-reveal="running"] .ticker-track.on .ticker-readout:not(:focus) .ticker-values { animation: ticker-open .6s steps(24) both; }
 @media (prefers-reduced-motion: no-preference) {
   #result[data-motion] .laser { animation: laser-flow 1.2s linear infinite; }
   #result[data-motion] .tac-bar i::after {
@@ -689,21 +717,12 @@ dialog p + p { margin-top: .6rem; }
     background: linear-gradient(100deg, transparent 30%, #ffffff70, transparent 70%);
     animation: bar-shine 3.6s ease-in-out infinite;
   }
-  #result[data-motion] .ticker-track { display: flex; overflow: hidden; }
-  #result[data-motion] .ticker-track p {
-    display: flex;
-    flex: none;
-    min-width: 100%;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-    gap: 1.5rem;
-    padding-inline-end: 1.5rem;
-    white-space: nowrap;
-  }
-  #result[data-motion]:not([data-reveal]) .ticker-track p,
-  #result[data-motion] .ticker-track.on p { animation: ticker-run 20s linear infinite; }
+  #result[data-motion] .ticker-readout:not(:focus) .ticker-values.marquee { overflow: clip; }
+  #result[data-motion] .ticker-readout:not(:focus) .ticker-values.marquee [aria-hidden] { display: flex; }
+  #result[data-motion]:not([data-reveal]) .ticker-readout:not(:focus) .ticker-values.marquee p,
+  #result[data-motion] .ticker-track.on .ticker-readout:not(:focus) .ticker-values.marquee p { animation: ticker-run 20s linear infinite; }
 }
-@keyframes ticker-run { to { transform: translateX(-100%); } }
+@keyframes ticker-run { to { transform: translateX(calc(-100% - var(--ticker-gap))); } }
 @keyframes bar-shine { 0% { transform: translateX(-100%); } 65%, 100% { transform: translateX(100%); } }
 @keyframes pin-drop {
   0% { opacity: 0; transform: translateY(-5rem) scale(1.6); }
@@ -745,7 +764,7 @@ dialog p + p { margin-top: .6rem; }
   .vgauge { margin-block: .2rem .45rem; }
   .tac-card { --stamp-start-scale: 1.4; padding: .7rem .9rem; }
   .tac-readouts { margin-top: .5rem; }
-  .tac-ticker { margin-top: .5rem; padding-top: .45rem; }
+  .ticker-track { margin-top: .5rem; padding-top: .45rem; }
   .result-actions, .result-links {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));

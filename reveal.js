@@ -188,6 +188,7 @@ function setMapZoom(zoom) {
 function setResultMotion(playing) {
   const enabled = playing && !motionPreference.matches;
   revealRoot.toggleAttribute("data-motion", enabled);
+  if (!enabled) tickerReadout.scrollLeft = 0;
   motionControl.hidden = motionPreference.matches;
   motionControl.textContent = enabled ? "暫停動態" : "播放動態";
 }
@@ -216,7 +217,7 @@ function stopReveal() {
   pinObserver?.disconnect();
   mapWorld.classList.remove("pins-close");
   delete revealRoot.dataset.reveal;
-  revealRoot.removeAttribute("data-motion");
+  setResultMotion(false);
 }
 
 function playReveal({ selection, score, compact }) {
@@ -395,12 +396,27 @@ function playReveal({ selection, score, compact }) {
   frame = requestAnimationFrame(tick);
 }
 
-const tickerFacts = q("ticker-track").firstElementChild;
+q("ticker-hex").textContent = hexColor(SITCON_GREEN);
+const tickerReadout = q("ticker-readout");
+const tickerValues = q("ticker-values");
+const tickerFacts = tickerValues.firstElementChild;
+tickerFacts.querySelector(".target-rgb").textContent = `rgb(${SITCON_GREEN.join(", ")})`;
 tickerFacts.querySelector(".target-hue").textContent = `色相 ${Math.round(targetHsv.hue)}°`;
 tickerFacts.querySelector(".target-saturation").textContent = `飽和度 ${Math.round(targetHsv.saturation * 100)}%`;
+tickerFacts.querySelector(".target-value").textContent = `明度 ${Math.round(targetHsv.value / 255 * 100)}%`;
 const tickerRepeat = tickerFacts.cloneNode(true);
 tickerRepeat.setAttribute("aria-hidden", "true");
 tickerFacts.after(tickerRepeat);
+const tickerSize = new ResizeObserver(() => {
+  const factsStyle = getComputedStyle(tickerFacts);
+  const availableWidth = parseFloat(getComputedStyle(tickerValues).width);
+  const overflows = parseFloat(factsStyle.width) > availableWidth;
+  // Leave the full row scrollable when the label and hex leave less than one glyph.
+  tickerValues.classList.toggle("marquee", overflows && availableWidth >= parseFloat(factsStyle.fontSize));
+  tickerReadout.tabIndex = overflows ? 0 : -1;
+});
+tickerSize.observe(tickerValues);
+tickerSize.observe(tickerFacts);
 
 motionControl.addEventListener("click", () => {
   if (current) {

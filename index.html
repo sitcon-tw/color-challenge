@@ -22,12 +22,12 @@
   <meta property="og:image:alt" content="調出 SITCON 綠。彩色色環中央是學生計算機年會的標準綠 Logo。">
   <meta name="twitter:card" content="summary_large_image">
   <title>SITCON Color Challenge｜調出 SITCON 綠</title>
-  <link rel="stylesheet" href="style.css?v=44b5be68a510">
+  <link rel="stylesheet" href="style.css?v=b23fc278439c">
   <script defer src="color.js?v=689a51c979c6"></script>
   <script defer src="round.js?v=28a60940284b"></script>
   <script defer src="tilt.js?v=011c209c47a3"></script>
   <script defer src="card.js?v=c47c07d4240b"></script>
-  <script defer src="reveal.js?v=b9ed82e480a2"></script>
+  <script defer src="reveal.js?v=282a1c1e3792"></script>
   <script defer src="game.js?v=fbcfaeb5a6ef"></script>
   <script defer src="share.js?v=43e1c8b62188"></script>
 </head>
@@ -131,14 +131,19 @@
             <div><span class="tac-k">RGB 距離</span><strong class="distance" id="distance"></strong><small>0 是同色</small></div>
           </div>
           <div class="tac-bar"><i id="tac-fill"></i></div>
-          <div class="tac-ticker">
+          <div class="ticker-track" id="ticker-track">
             <span class="flag"><img src="assets/logo.svg" alt=""></span>
-            <div class="ticker-track" id="ticker-track">
-              <p>
-                <span>SITCON 標準綠</span>
-                <span class="target-hue"></span>
-                <span class="target-saturation"></span>
-              </p>
+            <div class="ticker-readout" id="ticker-readout" role="group" aria-labelledby="ticker-label">
+              <span id="ticker-label">SITCON 標準綠</span>
+              <code id="ticker-hex"></code>
+              <div class="ticker-values" id="ticker-values">
+                <p>
+                  <span class="target-rgb"></span>
+                  <span class="target-hue"></span>
+                  <span class="target-saturation"></span>
+                  <span class="target-value"></span>
+                </p>
+              </div>
             </div>
           </div>
         </div>
