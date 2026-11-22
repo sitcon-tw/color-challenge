@@ -371,10 +371,30 @@ dialog h2 { font-size: 1.45rem; }
 dialog ol { padding-inline-start: 1.5rem; line-height: 1.7; }
 dialog li + li { margin-top: .55rem; }
 dialog p + p { margin-top: .6rem; }
-#share-dialog { width: min(44rem, calc(100% - 2rem)); max-width: none; padding: clamp(1rem, 3vw, 1.75rem); }
+#share-dialog {
+  width: min(44rem, calc(100% - 2rem));
+  max-width: none;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  border-color: #38bdf8aa;
+  background: #151d18 radial-gradient(#2a372f 1px, transparent 1px) 0 0 / 14px 14px;
+  color: #eef3ec;
+  box-shadow: 0 0 40px #38bdf833;
+}
+#share-dialog::backdrop { background: #0a100cdd; backdrop-filter: blur(3px); }
+#share-dialog h2 { font-size: 1.3rem; }
+#share-dialog h2::before { content: "SHARE"; margin-right: .6rem; color: #8be3ff; font: 700 .72rem/1 var(--mono); letter-spacing: .2em; text-shadow: 0 0 8px #38bdf888; }
+#share-dialog :focus-visible { outline-color: var(--accent); }
+#share-dialog p, #share-dialog #share-caption summary { color: #b9c9bd; }
+#share-dialog .quiet-button { border-color: #5d6f64; background: #ffffff12; color: #eef3ec; }
+#share-dialog .quiet-button:hover:not(:disabled) { background: #ffffff24; }
+#share-dialog .share-options [data-app="Instagram"] { border: 0; background: linear-gradient(120deg, #f58529, #dd2a7b 50%, #8134af); color: white; }
+#share-dialog .share-options [data-app="Instagram"]:hover:not(:disabled) { filter: brightness(1.12); background: linear-gradient(120deg, #f58529, #dd2a7b 50%, #8134af); }
+#share-dialog .share-links a, #share-dialog .share-links button { color: #8be3ff; }
+#share-dialog #share-caption { border-top-color: #38483f; }
+#share-dialog #share-text { border-color: #5d6f64; background: #0c140f; color: #eef3ec; }
 .share-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
 .share-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 1.25rem; }
-#share-preview { display: block; width: auto; height: auto; max-width: 100%; max-height: min(62dvh, 35rem); justify-self: center; border: 1px solid var(--rule); }
+#share-preview { display: block; width: auto; height: auto; max-width: 100%; max-height: min(62dvh, 35rem); justify-self: center; border: 1px solid #38bdf866; border-radius: .6rem; box-shadow: 0 0 28px #38bdf833; }
 .share-options { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; min-width: 0; margin: 0; padding: 0; border: 0; }
 .share-options [data-app="Instagram"], #native-share { grid-column: 1 / -1; }
 .share-options button { min-height: 2.75rem; }

@@ -204,7 +204,7 @@ function finishRound(now = Date.now()) {
     byId(id).textContent = delta > 0 ? "+" + delta : String(delta);
   });
   byId("replay").textContent = round.mode === "timed" ? "再挑戰 30 秒" : "再玩一次";
-  prepareShare({ rgb, grade, displayed, differences, mode: modeSummary, kind: round.mode });
+  prepareShare({ rgb, grade, displayed, differences, mode: modeSummary, kind: round.mode, selection: { ...round.selection }, score: scoreFromDistance(distance) });
   if (byId("help").open) byId("help").close();
   switchScreen(true);
 }
