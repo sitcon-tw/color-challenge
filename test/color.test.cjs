@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
-const { randomStartingColor, colorAfterTilt, hsvToRgb, rgbToHsv, scoreFromDistance, hexColor, compareWithSitcon, describeScore, describeColorDifference, rankAmongRgbColors, randomGuessComparison } = require("../color.js");
+const { randomStartingColor, colorAfterTilt, hsvToRgb, rgbToHsv, scoreFromDistance, hexColor, compareWithSitcon, describeScore, describeColorDifference, describeBrightnessDifference, rankAmongRgbColors, randomGuessComparison } = require("../color.js");
 
 test("a fresh draw changes all three starting controls", t => {
   let draw = 0.25;
@@ -76,6 +76,14 @@ test("random color odds distinguish exact matches from very small probabilities"
   assert.match(randomGuessComparison(256 ** 3), /超過 99.99%/);
 });
 
+test("brightness is relative to SITCON green and preserves one-step differences", () => {
+  const { value } = rgbToHsv([119, 181, 90]);
+  for (const [guess, expected] of [
+    [0, "比標準暗 100%"], [90, "比標準暗 50.3%"], [180, "比標準暗 0.6%"],
+    [181, "明度相同"], [182, "比標準亮 0.6%"], [192, "比標準亮 6.1%"], [255, "比標準亮 40.9%"],
+  ]) assert.equal(describeBrightnessDifference(guess, value), expected);
+});
+
 test("rgbToHsv inverts hsvToRgb for the wheel's colors", () => {
   for (const rgb of [[119, 181, 90], [255, 0, 0], [0, 0, 255], [10, 200, 220], [255, 255, 255], [0, 0, 0], [200, 30, 120]]) {
     assert.deepEqual(hsvToRgb(rgbToHsv(rgb)), rgb);
@@ -100,4 +108,21 @@ test("the result camera zooms only when the two pins are close, and eases toward
   assert.equal(fitZoom({ x: 50, y: 50 }, { x: 50, y: 50 }), 5);
   assert.deepEqual(fitFocus({ x: 80, y: 20 }, 1), { x: 50, y: 50 });
   assert.deepEqual(fitFocus({ x: 80, y: 20 }, 2.5), { x: 80, y: 20 });
+});
+
+test("the map describes the pin's position independently of the camera and brightness", () => {
+  const { wheelPoint, wheelPositionLabel, fitZoom, radarZoomLabel } = require("../card.js");
+  const green = rgbToHsv([119, 181, 90]);
+  const target = wheelPoint(green);
+  for (const [dx, dy, direction] of [
+    [-1, -1, "左上"], [0, -1, "上"], [1, -1, "右上"], [1, 0, "右"],
+    [1, 1, "右下"], [0, 1, "下"], [-1, 1, "左下"], [-1, 0, "左"],
+  ]) {
+    assert.equal(wheelPositionLabel({ x: target.x + dx, y: target.y + dy }, target), `你的落點在標準綠的${direction}方`);
+  }
+  assert.equal(wheelPositionLabel(wheelPoint({ ...green, value: 90 }), target), "你的落點與標準綠重合");
+  assert.equal(radarZoomLabel(fitZoom(wheelPoint(rgbToHsv([137, 192, 104])), target)), "局部放大 5 倍");
+  assert.equal(radarZoomLabel(fitZoom(wheelPoint(rgbToHsv([170, 80, 135])), target)), "完整色盤");
+  assert.equal(radarZoomLabel(1.02), "稍微放大");
+  assert.equal(radarZoomLabel(1.27), "局部放大 1.3 倍");
 });

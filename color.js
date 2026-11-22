@@ -94,6 +94,12 @@ function describeColorDifference(differences) {
   return `跟標準綠比，我的${name}色分量偏${differences[channel] > 0 ? "多" : "少"}。`;
 }
 
+function describeBrightnessDifference(value, standard) {
+  if (value === standard) return "明度相同";
+  const percent = Number((Math.abs(value - standard) / standard * 100).toFixed(1));
+  return `比標準${value > standard ? "亮" : "暗"} ${percent}%`;
+}
+
 function rankAmongRgbColors(differences) {
   const [red, green, blue] = SITCON_GREEN;
   // Squared RGB distances are integers. Subtract one to exclude all ties.
@@ -120,4 +126,4 @@ function randomGuessComparison(rank) {
   return `隨機挑一個 RGB 顏色，比你更接近標準綠的機率${odds}。`;
 }
 
-if (typeof module !== "undefined") module.exports = { randomStartingColor, colorAfterTilt, hsvToRgb, rgbToHsv, scoreFromDistance, hexColor, compareWithSitcon, describeScore, describeColorDifference, rankAmongRgbColors, randomGuessComparison };
+if (typeof module !== "undefined") module.exports = { randomStartingColor, colorAfterTilt, hsvToRgb, rgbToHsv, scoreFromDistance, hexColor, compareWithSitcon, describeScore, describeColorDifference, describeBrightnessDifference, rankAmongRgbColors, randomGuessComparison };

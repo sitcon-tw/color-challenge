@@ -32,6 +32,13 @@ function wheelGapPercent(guess, target) {
   return gap <= 100 * Number.EPSILON ? 0 : gap;
 }
 
+function wheelPositionLabel(guess, target) {
+  if (wheelGapPercent(guess, target) === 0) return "你的落點與標準綠重合";
+  const angle = Math.atan2(guess.y - target.y, guess.x - target.x);
+  const direction = ["右", "右下", "下", "左下", "左", "左上", "上", "右上"].at(Math.round(angle / (Math.PI / 4)));
+  return `你的落點在標準綠的${direction}方`;
+}
+
 // Same "zoom to fit" rule as the on-screen reveal. Screen = 50 + k * (world - midpoint).
 function fitZoom(guess, target) {
   const gap = wheelGapPercent(guess, target);
@@ -276,4 +283,4 @@ function makeScoreImage({ rgb, grade, displayed, mode, invitation, selection, sc
   });
 }
 
-if (typeof module !== "undefined") module.exports = { fitZoom, fitFocus, wheelPoint, wheelGapPercent, radarZoomLabel };
+if (typeof module !== "undefined") module.exports = { fitZoom, fitFocus, wheelPoint, wheelGapPercent, wheelPositionLabel, radarZoomLabel };

@@ -10,18 +10,15 @@ const SOUND_KEY = "color-challenge-sound";
 const revealRoot = q("result");
 const mapWorld = q("map-world");
 const soundToggle = q("sound-toggle");
-const skipButton = q("skip-reveal");
+const motionControl = q("motion-control");
 const targetHsv = rgbToHsv(SITCON_GREEN);
+const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 let soundOn = true;
 try { soundOn = localStorage.getItem(SOUND_KEY) !== "off"; } catch { /* storage may be blocked */ }
 let audioContext = null;
 let current = null;
-
-function wheelPosition({ hue, saturation }) {
-  const angle = hue * Math.PI / 180;
-  return { x: 50 + Math.sin(angle) * saturation * 50, y: 50 - Math.cos(angle) * saturation * 50 };
-}
+let effectsPaused = false;
 
 function renderSoundToggle() {
   soundToggle.setAttribute("aria-pressed", String(soundOn));
@@ -174,79 +171,69 @@ function setLine(from, to) {
   q("spark").setAttribute("cy", to.y);
 }
 
-function setTicker(rgb) {
-  const track = q("ticker-track");
-  const { hue, saturation } = targetHsv;
-  const parts = [
-    ["SITCON 標準綠"],
-    ["座標 ", `H ${Math.round(hue)}° · S ${Math.round(saturation * 100)}%`],
-    [hexColor(rgb)],
-    ["RGB ", rgb.join(" · ")],
-  ];
-  track.replaceChildren(...[0, 1].map(() => {
-    const group = document.createElement("span");
-    parts.forEach(([head, tail], index) => {
-      const part = document.createElement(index === 0 || tail === undefined ? "b" : "i");
-      part.style.fontStyle = "normal";
-      part.textContent = tail === undefined ? head : head + tail;
-      group.append(part, index < parts.length - 1 ? " ▸ " : "");
-    });
-    return group;
-  }));
-  track.lastElementChild.setAttribute("aria-hidden", "true");
-}
-
-function gaugeText(delta) {
-  return delta === 0 ? "明度相同" : (delta > 0 ? "偏亮 +" : "偏暗 −") + Math.round(Math.abs(delta) / 255 * 100) + "%";
-}
-
 function setGauge(from, to) {
   const head = Math.min(from, to) / 255 * 100;
   q("vg-beam").style.setProperty("--bl", pct(head));
   q("vg-beam").style.setProperty("--bw", pct(Math.abs(to - from) / 255 * 100));
-  q("vg-tag").style.setProperty("--tl", pct((from + to) / 2 / 255 * 100));
 }
 
-function showFinal({ displayed, score, guess, target, valueGuess, valueTarget }) {
+function setMapZoom(zoom) {
+  const label = q("map-zoom");
+  const text = radarZoomLabel(zoom);
+  if (label.textContent !== text) label.textContent = text;
+}
+
+function setResultMotion(playing) {
+  const enabled = playing && !motionPreference.matches;
+  revealRoot.toggleAttribute("data-motion", enabled);
+  motionControl.hidden = motionPreference.matches;
+  motionControl.textContent = enabled ? "暫停動態" : "播放動態";
+}
+
+function showFinal({ score, guess, target, valueGuess, valueTarget, zoom }, keepMoving = false) {
+  const skippedWithFocus = document.activeElement === motionControl;
   q("spark").style.opacity = "0";
   setGauge(valueGuess, valueTarget);
-  q("vg-tag").textContent = gaugeText(valueGuess - valueTarget);
-  q("vgauge").classList.add("on");
-  const mid = { x: (guess.x + target.x) / 2, y: (guess.y + target.y) / 2 };
   delete revealRoot.dataset.reveal;
+  // A camera transition can still be interpolating when the reveal is skipped.
+  mapWorld.getAnimations().forEach(animation => animation.cancel());
+  setMapZoom(zoom);
   setLine(guess, target);
-  mapWorld.style.setProperty("--mx", pct(mid.x));
-  mapWorld.style.setProperty("--my", pct(mid.y));
-  q("range-tag").textContent = displayed.toFixed(1);
-  q("distance").textContent = displayed.toFixed(1);
   q("score-points").textContent = score;
   q("tac-fill").style.width = score / 10 + "%";
-  q("ticker-track").parentElement.classList.add("on");
-  q("tac-card").classList.add("on");
-  skipButton.hidden = true;
+  setResultMotion(keepMoving);
+  if (skippedWithFocus && !keepMoving) q("result-title").focus();
 }
 
 // ---- Public entry points ------------------------------------------------
 function stopReveal() {
   current?.cancel();
   current = null;
+  delete revealRoot.dataset.reveal;
+  revealRoot.removeAttribute("data-motion");
 }
 
-function playReveal({ selection, displayed, score }) {
+function playReveal({ selection, score }) {
   stopReveal();
-  const guess = wheelPosition(selection);
-  const target = wheelPosition(targetHsv);
+  const guess = wheelPoint(selection);
+  const target = wheelPoint(targetHsv);
   const mid = { x: (guess.x + target.x) / 2, y: (guess.y + target.y) / 2 };
-  // Close pins get a "zoom to fit" so the distance tag has room.
-  const gap = Math.hypot(guess.x - target.x, guess.y - target.y);
   const zoom = fitZoom(guess, target);
+  const samePosition = wheelGapPercent(guess, target) === 0;
+  mapWorld.classList.toggle("pins-coincide", samePosition);
   const focus = fitFocus(mid, zoom);
   mapWorld.style.setProperty("--zoom", zoom);
   mapWorld.style.setProperty("--zx", zoom === 1 ? "0%" : pct(50 - guess.x - zoom * (focus.x - guess.x)));
   mapWorld.style.setProperty("--zy", zoom === 1 ? "0%" : pct(50 - guess.y - zoom * (focus.y - guess.y)));
   const valueGuess = selection.value;
   const valueTarget = targetHsv.value;
-  const data = { displayed, score, guess, target, valueGuess, valueTarget };
+  const data = { score, guess, target, valueGuess, valueTarget, zoom };
+  const onlyBrightnessDiffers = samePosition && valueGuess !== valueTarget;
+  const position = q("map-position");
+  position.textContent = onlyBrightnessDiffers ? "落點重合，只差明度" : wheelPositionLabel(guess, target);
+  position.classList.toggle("visually-hidden", !onlyBrightnessDiffers);
+  q("vg-tag").textContent = describeBrightnessDifference(valueGuess, valueTarget);
+  q("vgauge").style.setProperty("--midpoint", (valueGuess + valueTarget) / (2 * 255));
   q("vg-guess").style.setProperty("--at", pct(valueGuess / 255 * 100));
   q("vg-target").style.setProperty("--at", pct(valueTarget / 255 * 100));
 
@@ -258,25 +245,22 @@ function playReveal({ selection, displayed, score }) {
   mapWorld.style.setProperty("--gy", pct(guess.y));
   q("map-flash").style.setProperty("--tx", pct(target.x));
   q("map-flash").style.setProperty("--ty", pct(target.y));
-  setTicker(SITCON_GREEN);
-
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (motionPreference.matches || effectsPaused) {
     showFinal(data);
     return;
   }
 
   // Reset to the pre-reveal state.
+  setResultMotion(true);
   revealRoot.dataset.reveal = "running";
-  skipButton.hidden = false;
-  const staged = [".vgauge", ".vg-mark", ".pin", ".range-tag", ".map-lines", ".tac-card", ".stamp", ".ticker-window", ".map-world"];
+  motionControl.textContent = "略過動畫";
+  const staged = [".vgauge", ".vg-mark", ".pin", ".map-lines", ".tac-card", ".stamp", ".ticker-track", ".map-world"];
   revealRoot.querySelectorAll(staged.join()).forEach(element => element.classList.remove("on", "out", "go", "thump", "hot"));
   revealRoot.querySelectorAll(".ripple, .map-flash").forEach(element => element.classList.remove("go", "late"));
+  setMapZoom(Number(getComputedStyle(mapWorld).getPropertyValue("--k")));
   setLine(guess, guess);
   q("spark").style.opacity = "";
   setGauge(valueGuess, valueGuess);
-  q("vg-tag").textContent = "";
-  q("range-tag").textContent = "0.0";
-  q("distance").textContent = "0.0";
   q("score-points").textContent = "0";
   q("tac-fill").style.width = "0%";
 
@@ -308,7 +292,6 @@ function playReveal({ selection, displayed, score }) {
     }],
     [TIMELINE.pull, () => mapWorld.classList.add("out")],
     [TIMELINE.fly, () => {
-      q("range-tag").classList.add("on");
       revealRoot.querySelector(".map-lines").classList.add("on");
     }],
     [TIMELINE.hit, () => {
@@ -325,37 +308,35 @@ function playReveal({ selection, displayed, score }) {
       q("grade").classList.add("on");
       restart(q("tac-card"), "thump");
     }],
-    [TIMELINE.ticker, () => q("ticker-track").parentElement.classList.add("on")],
+    [TIMELINE.ticker, () => q("ticker-track").classList.add("on")],
   ];
 
   const started = performance.now();
   const total = TIMELINE.ticker + 700;
   let frame = 0;
   let next = 0;
+  let cameraSettled = false;
 
   function tick(now) {
     const elapsed = now - started;
     while (next < events.length && elapsed >= events[next][0]) events[next++][1]();
 
+    if (!cameraSettled && elapsed >= TIMELINE.pull) {
+      const actualZoom = new DOMMatrixReadOnly(getComputedStyle(mapWorld).transform).a;
+      setMapZoom(actualZoom);
+      cameraSettled = Math.abs(actualZoom - zoom) < 0.00001;
+    }
+
     if (elapsed >= TIMELINE.fly && elapsed < TIMELINE.hit) {
       const progress = easeOutQuint(Math.min(1, (elapsed - TIMELINE.fly) / TIMELINE.flyLength));
       const head = { x: guess.x + (target.x - guess.x) * progress, y: guess.y + (target.y - guess.y) * progress };
       setLine(guess, head);
-      mapWorld.style.setProperty("--mx", pct((guess.x + head.x) / 2));
-      mapWorld.style.setProperty("--my", pct((guess.y + head.y) / 2));
-      q("range-tag").textContent = (displayed * progress).toFixed(1);
-    } else if (elapsed >= TIMELINE.hit && next > 4) {
-      mapWorld.style.setProperty("--mx", pct(mid.x));
-      mapWorld.style.setProperty("--my", pct(mid.y));
-      q("range-tag").textContent = displayed.toFixed(1);
-      q("distance").textContent = displayed.toFixed(1);
     }
 
     if (elapsed >= TIMELINE.gauge && elapsed < TIMELINE.gauge + TIMELINE.gaugeLength + 50) {
       const progress = easeOutQuint(Math.min(1, (elapsed - TIMELINE.gauge) / TIMELINE.gaugeLength));
       const head = valueGuess + (valueTarget - valueGuess) * progress;
       setGauge(valueGuess, head);
-      q("vg-tag").textContent = gaugeText(Math.round((valueGuess - valueTarget) * progress));
       if (progress === 1 && !q("vg-target").classList.contains("hot")) q("vg-target").classList.add("hot");
     }
 
@@ -371,7 +352,7 @@ function playReveal({ selection, displayed, score }) {
 
   function finish() {
     synth?.master.gain.setTargetAtTime(0, audioContext.currentTime + 2, 0.3);
-    showFinal(data);
+    showFinal(data, true);
     current = null;
   }
 
@@ -395,5 +376,28 @@ function playReveal({ selection, displayed, score }) {
   frame = requestAnimationFrame(tick);
 }
 
-skipButton.addEventListener("click", () => current?.skip());
+const tickerFacts = q("ticker-track").firstElementChild;
+tickerFacts.querySelector(".target-hue").textContent = `色相 ${Math.round(targetHsv.hue)}°`;
+tickerFacts.querySelector(".target-saturation").textContent = `飽和度 ${Math.round(targetHsv.saturation * 100)}%`;
+const tickerRepeat = tickerFacts.cloneNode(true);
+tickerRepeat.setAttribute("aria-hidden", "true");
+tickerFacts.after(tickerRepeat);
+
+motionControl.addEventListener("click", () => {
+  if (current) {
+    current.skip();
+    return;
+  }
+  effectsPaused = revealRoot.hasAttribute("data-motion");
+  setResultMotion(!effectsPaused);
+});
 q("map").addEventListener("click", () => current?.skip());
+motionPreference.addEventListener("change", () => {
+  if (current) {
+    if (motionPreference.matches) current.skip();
+    return;
+  }
+  const hadFocus = document.activeElement === motionControl;
+  setResultMotion(!effectsPaused);
+  if (hadFocus && motionControl.hidden) q("result-title").focus();
+});

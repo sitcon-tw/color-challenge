@@ -7,6 +7,9 @@ const test = require("node:test");
 test("the page requests its current JavaScript and CSS through versioned URLs", () => {
   const root = path.join(__dirname, "..");
   const html = readFileSync(path.join(root, "index.html"), "utf8");
+  for (const [, src, body] of html.matchAll(/<script\b[^>]*\bsrc="([^"]+)"[^>]*>([\s\S]*?)<\/script>/gi)) {
+    assert.doesNotMatch(body, /<script\b/i, `close ${src} before the next script`);
+  }
   const assets = [...html.matchAll(/\b(?:src|href)="([\w./-]+\.(?:js|css))(?:\?([^"]*))?"/g)];
   assert.ok(assets.length, "expected local scripts and stylesheets in index.html");
   for (const [, file, query] of assets) {

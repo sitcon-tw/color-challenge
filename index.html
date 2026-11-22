@@ -22,13 +22,13 @@
   <meta property="og:image:alt" content="調出 SITCON 綠。彩色色環中央是學生計算機年會的標準綠 Logo。">
   <meta name="twitter:card" content="summary_large_image">
   <title>SITCON Color Challenge｜調出 SITCON 綠</title>
-  <link rel="stylesheet" href="style.css?v=0e28f6aaaa11">
-  <script defer src="color.js?v=5b9f0aee43bf"></script>
+  <link rel="stylesheet" href="style.css?v=e7646b511dda">
+  <script defer src="color.js?v=689a51c979c6"></script>
   <script defer src="round.js?v=28a60940284b"></script>
   <script defer src="tilt.js?v=011c209c47a3"></script>
-  <script defer src="card.js?v=4892294c51ab"></script>
-  <script defer src="reveal.js?v=0790c9d604e3"></script>
-  <script defer src="game.js?v=b6f66cd7458f"></script>
+  <script defer src="card.js?v=c47c07d4240b"></script>
+  <script defer src="reveal.js?v=3d9a3018d685"></script>
+  <script defer src="game.js?v=3c1ea8b816fd"></script>
   <script defer src="share.js?v=43e1c8b62188"></script>
 </head>
 <body>
@@ -124,14 +124,15 @@
           <h1 id="result-title" tabindex="-1" aria-describedby="result-mode result-readouts">你的挑戰結果</h1>
           <p id="grade-line"></p>
         </header>
-        <section class="radar" aria-label="結算動畫：你的選色與 SITCON 標準綠在色盤上的位置">
+        <section class="radar" aria-label="你的選色與 SITCON 標準綠的比較">
           <div class="radar-bar">
-            <span class="radar-tag" aria-hidden="true">TARGET LOCK</span>
+            <h2 class="radar-tag">色盤上的落點</h2>
             <span class="radar-tools">
-              <button type="button" class="radar-button" id="skip-reveal">略過動畫</button>
+              <button type="button" class="radar-button" id="motion-control" hidden>略過動畫</button>
               <button type="button" class="radar-button" id="sound-toggle" aria-pressed="true">音效：開</button>
             </span>
           </div>
+          <div class="map-key"><span>你的落點</span><span class="target-key">標準綠的位置</span></div>
           <div class="map" id="map" aria-hidden="true">
             <div class="map-world" id="map-world">
               <div class="map-wheel"></div>
@@ -146,17 +147,22 @@
               <span class="ripple hit" id="ripple-hit-b"></span>
               <span class="pin pin-target" id="pin-target"><i></i></span>
               <span class="pin pin-guess" id="pin-guess"><i></i></span>
-              <span class="range-tag" id="range-tag">0.0</span>
               <div class="map-flash" id="map-flash"></div>
             </div>
           </div>
-          <div class="vgauge" id="vgauge" aria-hidden="true">
+          <p class="map-caption">
+            <strong id="map-zoom"></strong>
+            <span class="visually-hidden" id="map-position"></span>
+          </p>
+          <div class="vgauge" id="vgauge">
             <span class="vg-k">明度</span>
-            <div class="vg-track">
-              <span class="vg-beam" id="vg-beam"></span>
-              <i class="vg-mark target" id="vg-target"></i>
-              <i class="vg-mark guess" id="vg-guess"></i>
-              <span class="vg-tag" id="vg-tag">0%</span>
+            <div class="vg-scale">
+              <span class="vg-tag" id="vg-tag"></span>
+              <div class="vg-track" aria-hidden="true">
+                <span class="vg-beam" id="vg-beam"></span>
+                <i class="vg-mark target" id="vg-target"></i>
+                <i class="vg-mark guess" id="vg-guess"></i>
+              </div>
             </div>
           </div>
         </section>
@@ -169,7 +175,13 @@
           <div class="tac-bar"><i id="tac-fill"></i></div>
           <div class="tac-ticker">
             <span class="flag"><img src="assets/logo.svg" alt=""></span>
-            <div class="ticker-window"><div class="ticker-track" id="ticker-track"></div></div>
+            <div class="ticker-track" id="ticker-track">
+              <p>
+                <span>SITCON 標準綠</span>
+                <span class="target-hue"></span>
+                <span class="target-saturation"></span>
+              </p>
+            </div>
           </div>
         </div>
         <div class="comparison-pair" id="result-swatches" role="group" aria-label="兩張色票比較">
