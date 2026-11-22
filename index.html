@@ -22,14 +22,14 @@
   <meta property="og:image:alt" content="調出 SITCON 綠。彩色色環中央是學生計算機年會的標準綠 Logo。">
   <meta name="twitter:card" content="summary_large_image">
   <title>SITCON Color Challenge｜調出 SITCON 綠</title>
-  <link rel="stylesheet" href="style.css?v=911195650783">
+  <link rel="stylesheet" href="style.css?v=6efccd2a07b5">
   <script defer src="color.js?v=5b9f0aee43bf"></script>
   <script defer src="round.js?v=28a60940284b"></script>
   <script defer src="tilt.js?v=011c209c47a3"></script>
   <script defer src="card.js?v=4892294c51ab"></script>
   <script defer src="reveal.js?v=0790c9d604e3"></script>
   <script defer src="game.js?v=d14529c2e3f3"></script>
-  <script defer src="share.js?v=2e0adc84dc8f"></script>
+  <script defer src="share.js?v=43e1c8b62188"></script>
 </head>
 <body>
   <header class="masthead">
@@ -235,8 +235,7 @@
       <form method="dialog"><button class="quiet-button" aria-label="關閉分享，回到結果">關閉</button></form>
     </header>
     <div class="share-body">
-      <img id="share-preview" width="1080" height="1920" alt="本局成績圖" hidden>
-      <div>
+      <div class="share-controls">
         <fieldset class="share-options" id="share-options" aria-label="圖片分享目的地" disabled>
           <button class="quiet-button" type="button" data-app="Instagram" data-url="https://www.instagram.com/">分享到 Instagram 限時動態</button>
           <button class="quiet-button" type="button" data-app="Threads" data-url="https://www.threads.com/intent/post">Threads</button>
@@ -245,10 +244,15 @@
         </fieldset>
         <p id="share-status" role="status"></p>
         <div class="share-links">
-          <a id="download-card" download hidden>下載限動圖（9:16）</a>
-          <a id="download-post" download hidden>下載貼文圖（4:5）</a>
           <button id="copy-game-link" type="button" hidden>複製挑戰連結</button>
           <a id="open-share-app" target="_blank" rel="noopener noreferrer" hidden></a>
+        </div>
+      </div>
+      <img id="share-preview" width="1080" height="1920" alt="本局成績圖" hidden>
+      <div class="share-downloads">
+        <div class="share-links">
+          <a id="download-card" download hidden>下載限動圖（9:16）</a>
+          <a id="download-post" download hidden>下載貼文圖（4:5）</a>
         </div>
         <details id="share-caption">
           <summary>分享文字</summary>

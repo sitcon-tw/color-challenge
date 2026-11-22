@@ -7,9 +7,9 @@ const shareText = byId("share-text");
 const sharePreview = byId("share-preview");
 const downloads = { story: byId("download-card"), post: byId("download-post") };
 const cardHeights = { story: 1920, post: 1350 };
-const modeRules = {
-  oneshot: "色盤和明度各點一次，按下就鎖定。",
-  gyro: "我傾斜手機選色，再用滑桿調明度。",
+const modeOpeners = {
+  oneshot: "我挑戰調出 SITCON 綠，色盤和明度各點一次",
+  gyro: "我傾斜手機選色，挑戰調出 SITCON 綠",
 };
 const copyGameLink = byId("copy-game-link");
 const openApp = byId("open-share-app");
@@ -20,14 +20,23 @@ function prepareShare(round) {
     if (card.url) URL.revokeObjectURL(card.url);
   }
   shareRound = round;
-  const { mode, grade, displayed } = round;
-  round.invitation = displayed === 0 ? "你也能調到距離 0 嗎？" : "你能比我更接近 SITCON 綠嗎？";
-  round.colorNote = describeColorDifference(round.differences);
-  round.rule = modeRules[round.kind] ?? "";
-  const challenge = "我看著 SITCON 標準綠，挑戰用色盤調出同色。" + round.rule;
-  const message = `${challenge}\n${grade.verdict}！${round.colorNote}\nRGB 距離 ${displayed}（0 是同色）· ${mode}\n本局稱號「${grade.name}」。${round.invitation}`;
+  const { mode, grade, displayed, score } = round;
+  const exact = displayed === 0;
   round.gameUrl = CHALLENGE_URL;
-  shareText.value = message + "\n" + round.gameUrl;
+  round.invitation = exact ? "你也能調到滿分嗎？" : "你能調得比我更像嗎？";
+  round.colorNote = exact ? "" : describeColorDifference(round.differences);
+  const points = exact ? "滿分 1000 分" : `${score} 分（滿分 1000）`;
+  round.resultText = `${grade.verdict}，${points}。`;
+  round.distanceText = "RGB 距離 " + displayed.toFixed(1) + (exact ? "" : "（0 就是同色）");
+  const opener = modeOpeners[round.kind] ?? "我看著標準色，用色盤挑戰調出 SITCON 綠";
+  shareText.value = [
+    `${opener}，拿到「${grade.name}」！`,
+    round.resultText,
+    mode,
+    round.distanceText,
+    round.invitation,
+    round.gameUrl,
+  ].join("\n");
 }
 
 async function makeShareCards(round) {
@@ -44,9 +53,9 @@ async function makeShareCards(round) {
 }
 
 function previewCard(format) {
-  const { cards, mode, grade, displayed, colorNote, rule } = shareRound;
+  const { cards, mode, grade, resultText, distanceText, colorNote, gameUrl } = shareRound;
   sharePreview.height = cardHeights[format];
-  sharePreview.alt = `${format === "story" ? "限動圖" : "貼文圖"}。對照右邊的 SITCON 標準綠，用色盤調出左邊的顏色。${rule}${grade.verdict}！${colorNote}RGB 距離 ${displayed}，${mode}，本局稱號「${grade.name}」。`;
+  sharePreview.alt = `調出 SITCON 綠${format === "story" ? "限動" : "貼文"}成績單。左邊的 SITCON Logo 是我的選色，右邊是標準綠。${colorNote}${resultText}稱號「${grade.name}」。${mode}。${distanceText}。挑戰網址 ${gameUrl}`;
   if (sharePreview.src !== cards[format].url) sharePreview.src = cards[format].url;
   sharePreview.hidden = false;
 }
@@ -59,7 +68,7 @@ byId("share-result").addEventListener("click", async () => {
   const round = shareRound;
   sharePreview.hidden = true;
   for (const link of Object.values(downloads)) link.hidden = true;
-  copyGameLink.hidden = !round.gameUrl;
+  copyGameLink.hidden = false;
   openApp.hidden = true;
   shareOptions.disabled = true;
   byId("native-share").hidden = true;
@@ -78,9 +87,8 @@ byId("share-result").addEventListener("click", async () => {
     }
     previewCard("story");
     byId("native-share").hidden = !round.cards.post.file;
-    shareStatus.textContent = round.cards.story.file
-      ? "選好社群後，請在系統分享選單點選該 App。"
-      : "選擇社群後會下載成績圖，再到該社群上傳。";
+    const nextStep = round.cards.story.file ? "先選社群，再從系統選單選擇 App。" : "點選社群即可下載成績圖。";
+    shareStatus.textContent = nextStep + "發限動可複製挑戰連結，貼到「連結」貼圖。";
     shareOptions.disabled = false;
   } catch {
     if (round !== shareRound) return;
@@ -107,7 +115,7 @@ shareOptions.addEventListener("click", async event => {
   if (!card.file) {
     downloads[format].click();
     const instructions = {
-      Instagram: "在 Instagram App 新增限時動態，選取下載的直式成績圖。",
+      Instagram: "在 Instagram 新增限時動態，上傳直式成績圖，再用「連結」貼圖貼上挑戰網址。",
       LINE: "開啟 LINE 聊天室，選取下載的成績圖傳送。",
       Threads: "開啟 Threads 發文，加入下載的成績圖。",
     };
