@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
-const { randomStartingColor, colorAfterTilt, hsvToRgb, hexColor, compareWithSitcon, describeScore, describeColorDifference, rankAmongRgbColors, randomGuessComparison } = require("../color.js");
+const { randomStartingColor, colorAfterTilt, hsvToRgb, rgbToHsv, scoreFromDistance, hexColor, compareWithSitcon, describeScore, describeColorDifference, rankAmongRgbColors, randomGuessComparison } = require("../color.js");
 
 test("a fresh draw changes all three starting controls", t => {
   let draw = 0.25;
@@ -74,4 +74,28 @@ test("random color odds distinguish exact matches from very small probabilities"
   assert.match(randomGuessComparison(2), /不到 0.01%/);
   assert.match(randomGuessComparison(256 ** 3 / 2 + 1), /約 50%/);
   assert.match(randomGuessComparison(256 ** 3), /超過 99.99%/);
+});
+
+test("rgbToHsv inverts hsvToRgb for the wheel's colors", () => {
+  for (const rgb of [[119, 181, 90], [255, 0, 0], [0, 0, 255], [10, 200, 220], [255, 255, 255], [0, 0, 0], [200, 30, 120]]) {
+    assert.deepEqual(hsvToRgb(rgbToHsv(rgb)), rgb);
+  }
+  assert.equal(rgbToHsv([0, 255, 0]).hue, 120);
+  assert.equal(rgbToHsv([128, 128, 128]).saturation, 0);
+});
+
+test("the point score falls with distance and only an exact match is perfect", () => {
+  assert.equal(scoreFromDistance(0), 1000);
+  assert.equal(scoreFromDistance(0.05), 999);
+  assert.ok(scoreFromDistance(5) > scoreFromDistance(20));
+  assert.ok(scoreFromDistance(20) > scoreFromDistance(100));
+  assert.ok(scoreFromDistance(441.7) >= 0);
+});
+
+test("the result camera zooms only when the two pins are close, and eases toward their midpoint", () => {
+  const { fitZoom, fitFocus } = require("../card.js");
+  assert.equal(fitZoom({ x: 10, y: 10 }, { x: 90, y: 90 }), 1);
+  assert.equal(fitZoom({ x: 50, y: 50 }, { x: 54.5, y: 50 }), 10 > 5 ? 5 : 0);
+  assert.deepEqual(fitFocus({ x: 80, y: 20 }, 1), { x: 50, y: 50 });
+  assert.deepEqual(fitFocus({ x: 80, y: 20 }, 2.5), { x: 80, y: 20 });
 });

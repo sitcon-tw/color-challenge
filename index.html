@@ -12,12 +12,14 @@
   <meta name="theme-color" content="#202924">
   <meta name="description" content="對照 SITCON 標準綠，在全彩色盤上選色並調整明度，送出後揭曉你差多少。">
   <title>SITCON Color Challenge｜調出 SITCON 綠</title>
-  <link rel="stylesheet" href="style.css?v=8a1f6ed0368e">
-  <script defer src="color.js?v=14d3454db6e0"></script>
+  <link rel="stylesheet" href="style.css?v=911195650783">
+  <script defer src="color.js?v=5b9f0aee43bf"></script>
   <script defer src="round.js?v=28a60940284b"></script>
   <script defer src="tilt.js?v=011c209c47a3"></script>
-  <script defer src="game.js?v=c5ae71f42a0f"></script>
-  <script defer src="share.js?v=8e054fa271e6"></script>
+  <script defer src="card.js?v=0ea64d00a26c"></script>
+  <script defer src="reveal.js?v=0790c9d604e3"></script>
+  <script defer src="game.js?v=d14529c2e3f3"></script>
+  <script defer src="share.js?v=6e403be12697"></script>
 </head>
 <body>
   <header class="masthead">
@@ -111,13 +113,77 @@
         <p id="grade-line"></p>
       </header>
       <div class="result-layout">
+        <div class="result-stage">
+          <section class="radar" aria-label="結算動畫：你的選色與 SITCON 標準綠在色盤上的位置">
+            <div class="radar-bar">
+              <span class="radar-tag" aria-hidden="true">TARGET LOCK</span>
+              <span class="radar-tools">
+                <button type="button" class="radar-button" id="skip-reveal">略過動畫</button>
+                <button type="button" class="radar-button" id="sound-toggle" aria-pressed="true">音效：開</button>
+              </span>
+            </div>
+            <div class="map" id="map" aria-hidden="true">
+              <div class="map-world" id="map-world">
+                <div class="map-wheel"></div>
+                <svg class="map-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <line class="laser-glow" id="laser-glow" x1="0" y1="0" x2="0" y2="0"/>
+                  <line class="laser" id="laser" x1="0" y1="0" x2="0" y2="0"/>
+                  <circle class="spark" id="spark" r="1.6" cx="0" cy="0"/>
+                </svg>
+                <span class="ripple" id="ripple-guess-a"></span>
+                <span class="ripple" id="ripple-guess-b"></span>
+                <span class="ripple hit" id="ripple-hit-a"></span>
+                <span class="ripple hit" id="ripple-hit-b"></span>
+                <span class="pin pin-target" id="pin-target"><i></i></span>
+                <span class="pin pin-guess" id="pin-guess"><i></i></span>
+                <span class="range-tag" id="range-tag">0.0</span>
+                <div class="map-flash" id="map-flash"></div>
+              </div>
+            </div>
+            <div class="vgauge" id="vgauge" aria-hidden="true">
+              <span class="vg-k">明度</span>
+              <div class="vg-track">
+                <span class="vg-beam" id="vg-beam"></span>
+                <i class="vg-mark target" id="vg-target"></i>
+                <i class="vg-mark guess" id="vg-guess"></i>
+                <span class="vg-tag" id="vg-tag">0%</span>
+              </div>
+            </div>
+            <div class="tac-card" id="tac-card" role="group" aria-label="本局結算">
+              <strong class="stamp" id="grade"></strong>
+              <div class="tac-head">戰術結算 <span>DEBRIEF</span></div>
+              <div class="tac-readouts">
+                <div><span class="tac-k">RGB 距離</span><strong class="distance" id="distance"></strong></div>
+                <div><span class="tac-k">得分</span><strong class="points"><b id="score-points">0</b><small> / 1000</small></strong></div>
+              </div>
+              <div class="tac-bar"><i id="tac-fill"></i></div>
+              <div class="tac-ticker">
+                <span class="flag"><img src="assets/logo.svg" alt=""></span>
+                <div class="ticker-window"><div class="ticker-track" id="ticker-track"></div></div>
+              </div>
+            </div>
+          </section>
+          <section class="comparison" aria-label="兩張色票比較">
+            <div class="comparison-pair">
+              <div class="result-card">
+                <div class="result-ink" id="result-ink"></div>
+                <div class="result-caption"><h2>你的選色</h2><strong id="result-hex"></strong><span>RGB <bdi id="result-rgb"></bdi></span></div>
+              </div>
+              <div class="result-card">
+                <div class="result-ink" id="official-ink"></div>
+                <div class="result-caption"><h2>SITCON 標準綠</h2><strong id="official-hex"></strong><span>RGB <bdi id="official-rgb"></bdi></span></div>
+              </div>
+            </div>
+            <a class="source-link" href="https://sitcon.org/branding/">SITCON 品牌使用規範</a>
+            <a class="quiet-button" href="https://sitcon.org/about">認識 SITCON</a>
+          </section>
+        </div>
         <section class="score-panel" aria-labelledby="score-title">
-          <div class="score-heading"><h2 id="score-title">RGB 距離</h2><span id="result-mode"></span></div>
-          <div class="score-value"><strong class="distance" id="distance"></strong><strong id="grade"></strong></div>
+          <div class="score-heading"><h2 id="score-title">詳細比對</h2><span id="result-mode"></span></div>
           <p id="color-rank"></p>
           <details class="score-guide" id="score-guide">
             <summary>這個距離怎麼看？</summary>
-            <p>每個色值都是 0–255。只有紅色差 5 格，距離就是 5。若紅、綠、藍各差 5 格，距離約為 8.7。</p>
+            <p>每個色值都是 0–255。只有紅色差 5 格，距離就是 5。若紅、綠、藍各差 5 格，距離約為 8.7。得分為 1000 × e<sup>−距離 ÷ 60</sup>，只有完全同色才是滿分。</p>
             <dl id="grade-scale" aria-label="遊戲距離分級，由小到大"></dl>
             <p>分級採顯示到小數一位的距離。<span id="rank-detail"></span></p>
           </details>
@@ -134,20 +200,6 @@
             <button type="button" class="action" id="share-result">分享成績</button>
             <button type="button" class="quiet-button" id="replay">再玩一次</button>
           </div>
-        </section>
-        <section class="comparison" aria-label="兩張色票比較">
-          <div class="comparison-pair">
-            <div class="result-card">
-              <div class="result-ink" id="result-ink"></div>
-              <div class="result-caption"><h2>你的選色</h2><strong id="result-hex"></strong><span>RGB <bdi id="result-rgb"></bdi></span></div>
-            </div>
-            <div class="result-card">
-              <div class="result-ink" id="official-ink"></div>
-              <div class="result-caption"><h2>SITCON 標準綠</h2><strong id="official-hex"></strong><span>RGB <bdi id="official-rgb"></bdi></span></div>
-            </div>
-          </div>
-          <a class="source-link" href="https://sitcon.org/branding/">SITCON 品牌使用規範</a>
-          <a class="quiet-button" href="https://sitcon.org/about">認識 SITCON</a>
         </section>
       </div>
     </section>

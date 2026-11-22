@@ -31,63 +31,6 @@ function prepareShare(round) {
   shareText.value = round.gameUrl ? message + "\n" + round.gameUrl : message;
 }
 
-function makeScoreImage({ rgb, grade, displayed, mode, invitation, colorNote, rule }, format, logo) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 1080;
-  canvas.height = cardHeights[format];
-  const ctx = canvas.getContext("2d");
-  const ink = "#202924";
-  const paper = "#f5f6f0";
-  const accent = "#ffdf79";
-  const font = '"Inter", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", sans-serif';
-
-  function rect(x, y, width, height, color) {
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, width, height);
-  }
-  function label(text, x, baseline, size, weight, color, maxWidth = canvas.width - 144) {
-    ctx.fillStyle = color;
-    ctx.font = `${weight} ${size}px ${font}`;
-    ctx.fillText(text, x, baseline, maxWidth);
-  }
-
-  const story = format === "story";
-  const top = story ? 210 : 0;
-  const swatchTop = story ? 552 : 498;
-  const scoreTop = swatchTop + 394;
-  rect(0, 0, canvas.width, canvas.height, paper);
-  ctx.translate(0, top);
-  label("SITCON 學生計算機年會", 72, 109, 43, 650, ink);
-  ctx.drawImage(logo, 804, 35, 196, 196 * 261.6 / 193.6);
-  label("調出 SITCON 綠", 66, 259, 98, 800, ink, 700);
-  label("看著右邊的 SITCON 標準綠，", 72, 355, 46, 550, ink);
-  label(rule || "我只靠眼力，用色盤調出左邊的答案。", 72, 422, 46, 550, ink);
-
-  const swatches = [[hexColor(rgb), "我調的顏色"], [hexColor(SITCON_GREEN), "SITCON 標準綠"]];
-  swatches.forEach(([color, name], index) => {
-    const x = 72 + index * 480;
-    rect(x, swatchTop, 456, 338, "#aab3a6");
-    rect(x + 2, swatchTop + 2, 452, 334, "white");
-    rect(x + 12, swatchTop + 12, 432, 232, color);
-    label(name, x + 24, swatchTop + 305, 39, 650, ink);
-  });
-
-  rect(0, scoreTop, canvas.width, canvas.height - top - scoreTop, ink);
-  label(grade.verdict, 67, scoreTop + 110, 82, 800, accent);
-  label(colorNote, 72, scoreTop + 177, 37, 550, "white");
-  label(`本局稱號「${grade.name}」`, 72, scoreTop + 254, 35, 500, "#e0e7df", 445);
-  ctx.textAlign = "right";
-  label(`RGB 距離 ${displayed}`, 1008, scoreTop + 99, 41, 650, "white");
-  label("0 就是同色", 1008, scoreTop + 163, 33, 500, "white");
-  label(mode, 1008, scoreTop + 254, 33, 500, "#e0e7df", 470);
-  ctx.textAlign = "left";
-  rect(72, scoreTop + 291, 936, 2, "#65716a");
-  label(invitation, 72, scoreTop + 386, 49, 650, "white");
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("PNG export failed")), "image/png");
-  });
-}
-
 async function makeShareCards(round) {
   const logo = byId("official-logo");
   await logo.decode();

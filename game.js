@@ -157,6 +157,7 @@ byId("tilt-button").addEventListener("click", () => {
 });
 
 function beginRound() {
+  stopReveal();
   tiltController?.abort();
   clearInterval(clock);
   clock = null;
@@ -195,7 +196,7 @@ function finishRound(now = Date.now()) {
   byId("result-mode").textContent = modeSummary;
   byId("grade-line").textContent = grade.line;
   byId("grade").textContent = grade.name;
-  byId("distance").textContent = displayed;
+  byId("distance").textContent = displayed.toFixed(1);
   byId("color-rank").textContent = randomGuessComparison(rank);
   byId("rank-detail").textContent = `把全部 ${RGB_COLORS.toLocaleString("zh-TW")} 種 RGB 顏色按原始距離排序，你的選色是第 ${rank.toLocaleString("zh-TW")} 名，同距離並列。`;
   byId("score-guide").open = false;
@@ -204,9 +205,10 @@ function finishRound(now = Date.now()) {
     byId(id).textContent = delta > 0 ? "+" + delta : String(delta);
   });
   byId("replay").textContent = round.mode === "timed" ? "再挑戰 30 秒" : "再玩一次";
-  prepareShare({ rgb, grade, displayed, differences, mode: modeSummary, kind: round.mode });
+  prepareShare({ rgb, grade, displayed, differences, mode: modeSummary, kind: round.mode, selection: { ...round.selection }, score: scoreFromDistance(distance) });
   if (byId("help").open) byId("help").close();
   switchScreen(true);
+  playReveal({ selection: round.selection, displayed, score: scoreFromDistance(distance) });
 }
 
 byId("guess-form").addEventListener("submit", event => {
