@@ -51,6 +51,19 @@ function hsvToRgb({ hue, saturation, value }) {
   return channels.map(channel => Math.round(channel + (value - chroma)));
 }
 
+function rgbToHsv([red, green, blue]) {
+  const value = Math.max(red, green, blue);
+  const delta = value - Math.min(red, green, blue);
+  let hue = 0;
+  if (delta) {
+    const sector = value === red ? ((green - blue) / delta + 6) % 6
+      : value === green ? (blue - red) / delta + 2
+      : (red - green) / delta + 4;
+    hue = sector * 60;
+  }
+  return { hue, saturation: value ? delta / value : 0, value };
+}
+
 function hexColor(rgb) {
   return "#" + rgb.map(channel => channel.toString(16).padStart(2, "0")).join("").toUpperCase();
 }
@@ -63,6 +76,12 @@ function compareWithSitcon(rgb) {
 function describeScore(distance) {
   const displayed = Number(distance.toFixed(1));
   return { displayed, grade: GRADES.find(grade => displayed <= grade.max) };
+}
+
+// Points out of 1000. Only an exact match earns all of them.
+function scoreFromDistance(distance) {
+  if (distance === 0) return 1000;
+  return Math.min(999, Math.round(1000 * Math.exp(-distance / 60)));
 }
 
 function describeColorDifference(differences) {
@@ -101,4 +120,4 @@ function randomGuessComparison(rank) {
   return `隨機挑一個 RGB 顏色，比你更接近標準綠的機率${odds}。`;
 }
 
-if (typeof module !== "undefined") module.exports = { randomStartingColor, colorAfterTilt, hsvToRgb, hexColor, compareWithSitcon, describeScore, describeColorDifference, rankAmongRgbColors, randomGuessComparison };
+if (typeof module !== "undefined") module.exports = { randomStartingColor, colorAfterTilt, hsvToRgb, rgbToHsv, scoreFromDistance, hexColor, compareWithSitcon, describeScore, describeColorDifference, rankAmongRgbColors, randomGuessComparison };
