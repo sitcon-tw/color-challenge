@@ -5,6 +5,8 @@ const wheel = byId("wheel");
 const cursor = byId("cursor");
 const brightness = byId("brightness");
 const modes = byId("modes");
+const shareButton = byId("share-result");
+const replayButton = byId("replay");
 let round;
 let clock = null;
 let dragPointer = null;
@@ -189,14 +191,16 @@ function finishRound(now = Date.now()) {
   const rgb = hsvToRgb(round.selection);
   const { differences, distance } = compareWithSitcon(rgb);
   const { displayed, grade } = describeScore(distance);
+  const score = scoreFromDistance(distance);
   const rank = rankAmongRgbColors(differences);
   showSwatch("result", rgb);
   showSwatch("official", SITCON_GREEN);
-  byId("result-title").textContent = distance === 0 ? "完全命中 SITCON 綠！" : "你的挑戰結果";
+  byId("result-title").textContent = grade.verdict + "！";
   byId("result-mode").textContent = modeSummary;
   byId("grade-line").textContent = grade.line;
   byId("grade").textContent = grade.name;
   byId("distance").textContent = displayed.toFixed(1);
+  byId("final-score").textContent = score;
   byId("color-rank").textContent = randomGuessComparison(rank);
   byId("rank-detail").textContent = `把全部 ${RGB_COLORS.toLocaleString("zh-TW")} 種 RGB 顏色按原始距離排序，你的選色是第 ${rank.toLocaleString("zh-TW")} 名，同距離並列。`;
   byId("score-guide").open = false;
@@ -204,11 +208,11 @@ function finishRound(now = Date.now()) {
     const delta = differences[index];
     byId(id).textContent = delta > 0 ? "+" + delta : String(delta);
   });
-  byId("replay").textContent = round.mode === "timed" ? "再挑戰 30 秒" : "再玩一次";
-  prepareShare({ rgb, grade, displayed, differences, mode: modeSummary, kind: round.mode, selection: { ...round.selection }, score: scoreFromDistance(distance) });
+  replayButton.textContent = round.mode === "timed" ? "再挑戰 30 秒" : "再玩一次";
+  prepareShare({ rgb, grade, displayed, differences, mode: modeSummary, kind: round.mode, selection: { ...round.selection }, score });
   if (byId("help").open) byId("help").close();
   switchScreen(true);
-  playReveal({ selection: round.selection, displayed, score: scoreFromDistance(distance) });
+  playReveal({ selection: round.selection, displayed, score });
 }
 
 byId("guess-form").addEventListener("submit", event => {
@@ -216,7 +220,7 @@ byId("guess-form").addEventListener("submit", event => {
   if (round.mode !== "oneshot" && !byId("submit-guess").disabled) finishRound();
 });
 modes.addEventListener("change", beginRound);
-byId("replay").addEventListener("click", beginRound);
+replayButton.addEventListener("click", beginRound);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) updateClock();
 });
