@@ -727,7 +727,14 @@ dialog p + p { margin-top: .6rem; }
   .workbench[data-mode="oneshot"] { grid-template-areas: "samples" "wheel"; grid-template-rows: auto auto; }
   .result-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "intro" "radar" "report" "swatches" "actions"; padding-top: 1.35rem; gap: .85rem; }
   .result-layout .result-intro { padding: 0; }
+  .result-actions, .result-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+    align-items: stretch;
+    gap: .65rem;
+  }
   .comparison-pair { column-gap: .65rem; }
+  .result-links a { display: inline-flex; align-items: center; justify-content: center; min-block-size: 2.85rem; text-align: center; }
   .score-panel { grid-template-columns: minmax(0, 1fr); }
   .difference { padding: 1rem 0 0; border: 0; border-top: 1px dashed #a9b1a4; }
   .instrument-header { padding: .9rem 1rem; }

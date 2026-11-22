@@ -111,6 +111,31 @@ function switchScreen(showResult) {
   window.scrollTo(0, 0);
 }
 
+function orderResultPair(first, second) {
+  if (first.nextElementSibling === second) return;
+  // Move the unfocused sibling so resizing preserves keyboard focus.
+  if (first.contains(document.activeElement)) first.after(second);
+  else second.before(first);
+}
+
+function placeResultLinks({ matches: narrow }) {
+  const links = document.querySelector(".result-links");
+  const details = document.querySelector(".score-panel");
+  if (narrow) orderResultPair(links, details);
+  else orderResultPair(details, links);
+}
+
+const narrowResults = window.matchMedia("(max-width: 47rem)");
+placeResultLinks(narrowResults);
+narrowResults.addEventListener("change", placeResultLinks);
+
+new ResizeObserver(() => {
+  // The mobile grid can still stack when the player uses larger text.
+  const sideBySide = shareButton.offsetLeft !== replayButton.offsetLeft;
+  if (narrowResults.matches && sideBySide) orderResultPair(replayButton, shareButton);
+  else orderResultPair(shareButton, replayButton);
+}).observe(shareButton.parentElement);
+
 function showSwatch(prefix, rgb) {
   const hex = hexColor(rgb);
   byId(prefix + "-ink").style.backgroundColor = hex;
