@@ -716,7 +716,7 @@ dialog p + p { margin-top: .6rem; }
 @keyframes thump { 0%, 100% { translate: 0 0; } 25% { translate: 0 5px; } 55% { translate: 0 -2px; } }
 @keyframes card-in { from { opacity: 0; transform: translateY(2.5rem); } to { opacity: 1; transform: none; } }
 @keyframes stamp-slam {
-  0% { opacity: 0; transform: rotate(-20deg) scale(3.4); }
+  0% { opacity: 0; transform: rotate(-20deg) scale(var(--stamp-start-scale, 3.4)); }
   55% { opacity: 1; transform: rotate(-6deg) scale(.9); }
   75% { transform: rotate(-6deg) scale(1.05); }
   100% { opacity: 1; transform: rotate(-6deg) scale(1); }
@@ -724,9 +724,6 @@ dialog p + p { margin-top: .6rem; }
 @keyframes ticker-open { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
 @media (prefers-reduced-motion: reduce) {
   #result *, #result ::before, #result ::after { animation: none !important; transition: none !important; }
-}
-@media (max-width: 47rem) {
-  .radar { --map-width: min(100% - 2.2rem, 22rem); padding: 1rem; }
 }
 @media (max-width: 38rem) {
   #share-dialog { width: calc(100% - 1rem); max-height: calc(100dvh - 2rem); margin-block-start: 1rem; padding-inline: .75rem; }
@@ -740,8 +737,15 @@ dialog p + p { margin-top: .6rem; }
   .intro { padding-block: 1.35rem 1.1rem; }
   .workbench { grid-template-columns: 1fr; gap: 1rem; grid-template-areas: "samples" "wheel" "submit"; grid-template-rows: auto auto auto; }
   .workbench[data-mode="oneshot"] { grid-template-areas: "samples" "wheel"; grid-template-rows: auto auto; }
-  .result-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "intro" "radar" "report" "swatches" "actions"; padding-top: 1.35rem; gap: .85rem; }
+  .result-layout { container: mobile-result / inline-size; grid-template-columns: minmax(0, 1fr); grid-template-areas: "intro" "report" "radar" "swatches" "actions"; padding-top: 1rem; gap: .75rem; }
   .result-layout .result-intro { padding: 0; }
+  .radar { --map-width: min(100% - 1.25rem, 24svh, 12.5rem); padding: .75rem .9rem; }
+  .map { margin-block: 1.65rem .65rem; }
+  .map-caption { margin-block: .15rem .4rem; }
+  .vgauge { margin-block: .2rem .45rem; }
+  .tac-card { --stamp-start-scale: 1.4; padding: .7rem .9rem; }
+  .tac-readouts { margin-top: .5rem; }
+  .tac-ticker { margin-top: .5rem; padding-top: .45rem; }
   .result-actions, .result-links {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
@@ -765,12 +769,22 @@ dialog p + p { margin-top: .6rem; }
   .sample-pair figcaption { padding: .2rem 0 0; font-size: .875rem; }
   .result-ink { min-height: clamp(4rem, 16vw, 7rem); }
 }
+@container mobile-result (min-width: 18rem) {
+  .radar {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr 1fr auto;
+    grid-template-areas: "tools tools" "map key" "map scale" "gauge gauge";
+    column-gap: .65rem;
+  }
+  .radar-bar { grid-area: tools; }
+  .map { grid-area: map; }
+  .map-key { grid-area: key; align-self: end; display: grid; margin: 0; }
+  .map-caption { grid-area: scale; align-self: start; margin: .4rem 0 0; text-align: start; }
+  .vgauge { grid-area: gauge; }
+}
 @media (max-width: 47rem) and (min-height: 35rem) {
   .sample-panel { position: sticky; z-index: 1; top: 0; }
   .wheel, #brightness { scroll-margin-top: calc(var(--mobile-logo-height) + 7rem); }
-}
-@media (max-width: 47rem) and (prefers-reduced-motion: reduce) {
-  .result-layout { grid-template-areas: "intro" "report" "radar" "swatches" "actions"; }
 }
 @media (max-width: 26rem) {
   .masthead-inner { flex-wrap: wrap; gap: .3rem .5rem; padding-block: .35rem; }

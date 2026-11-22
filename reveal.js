@@ -219,7 +219,7 @@ function stopReveal() {
   revealRoot.removeAttribute("data-motion");
 }
 
-function playReveal({ selection, score }) {
+function playReveal({ selection, score, compact }) {
   stopReveal();
   const guess = wheelPoint(selection);
   const target = wheelPoint(targetHsv);
@@ -280,6 +280,9 @@ function playReveal({ selection, score }) {
   q("score-points").textContent = "0";
   q("tac-fill").style.width = "0%";
 
+  // On phones the scorecard is the first panel, so reveal it with the first pin.
+  const cardAt = compact ? 0 : TIMELINE.card;
+  const barAt = compact ? TIMELINE.land : TIMELINE.bar;
   let synth = null;
   let startAudio = 0;
   if (soundOn && audioContext && audioContext.state !== "closed") {
@@ -292,8 +295,8 @@ function playReveal({ selection, score }) {
     synth.laser(at(TIMELINE.fly));
     synth.hit(at(TIMELINE.hit));
     synth.gauge(at(TIMELINE.gauge));
-    synth.card(at(TIMELINE.card));
-    synth.bar(at(TIMELINE.bar), TIMELINE.barLength / 1000);
+    synth.card(at(cardAt));
+    synth.bar(at(barAt), TIMELINE.barLength / 1000);
     synth.stamp(at(TIMELINE.stamp));
     synth.ticker(at(TIMELINE.ticker));
   }
@@ -319,13 +322,13 @@ function playReveal({ selection, score }) {
       restart(q("map"), "thump");
     }],
     [TIMELINE.gauge, () => q("vgauge").classList.add("on")],
-    [TIMELINE.card, () => q("tac-card").classList.add("on")],
+    [cardAt, () => q("tac-card").classList.add("on")],
     [TIMELINE.stamp, () => {
       q("grade").classList.add("on");
       restart(q("tac-card"), "thump");
     }],
     [TIMELINE.ticker, () => q("ticker-track").classList.add("on")],
-  ];
+  ].sort(([a], [b]) => a - b);
 
   const started = performance.now();
   const total = TIMELINE.ticker + 700;
@@ -356,8 +359,8 @@ function playReveal({ selection, score }) {
       if (progress === 1 && !q("vg-target").classList.contains("hot")) q("vg-target").classList.add("hot");
     }
 
-    if (elapsed >= TIMELINE.bar) {
-      const progress = easeOut(Math.min(1, (elapsed - TIMELINE.bar) / TIMELINE.barLength));
+    if (elapsed >= barAt) {
+      const progress = easeOut(Math.min(1, (elapsed - barAt) / TIMELINE.barLength));
       q("tac-fill").style.width = score / 10 * progress + "%";
       q("score-points").textContent = Math.round(score * progress);
     }

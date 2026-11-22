@@ -236,7 +236,7 @@ function finishRound(now = Date.now()) {
   replayButton.textContent = round.mode === "timed" ? "再挑戰 30 秒" : "再玩一次";
   prepareShare({ rgb, grade, displayed, differences, mode: modeSummary, kind: round.mode, selection: { ...round.selection }, score });
   if (byId("help").open) byId("help").close();
-  playReveal({ selection: round.selection, score });
+  playReveal({ selection: round.selection, score, compact: narrowResults.matches });
   switchScreen(true);
 }
 
