@@ -1,5 +1,6 @@
 "use strict";
 
+const CHALLENGE_URL = "https://sitcon.org/color-challenge/";
 const shareOptions = byId("share-options");
 const shareStatus = byId("share-status");
 const shareText = byId("share-text");
@@ -25,10 +26,8 @@ function prepareShare(round) {
   round.rule = modeRules[round.kind] ?? "";
   const challenge = "我看著 SITCON 標準綠，挑戰用色盤調出同色。" + round.rule;
   const message = `${challenge}\n${grade.verdict}！${round.colorNote}\nRGB 距離 ${displayed}（0 是同色）· ${mode}\n本局稱號「${grade.name}」。${round.invitation}`;
-  const { protocol, hostname, origin, pathname } = location;
-  const local = hostname === "localhost" || hostname.endsWith(".localhost") || hostname.startsWith("127.") || hostname === "[::1]";
-  round.gameUrl = /^https?:$/.test(protocol) && !local ? origin + pathname : "";
-  shareText.value = round.gameUrl ? message + "\n" + round.gameUrl : message;
+  round.gameUrl = CHALLENGE_URL;
+  shareText.value = message + "\n" + round.gameUrl;
 }
 
 async function makeShareCards(round) {

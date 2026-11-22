@@ -95,7 +95,9 @@ test("the point score falls with distance and only an exact match is perfect", (
 test("the result camera zooms only when the two pins are close, and eases toward their midpoint", () => {
   const { fitZoom, fitFocus } = require("../card.js");
   assert.equal(fitZoom({ x: 10, y: 10 }, { x: 90, y: 90 }), 1);
-  assert.equal(fitZoom({ x: 50, y: 50 }, { x: 54.5, y: 50 }), 10 > 5 ? 5 : 0);
+  assert.equal(fitZoom({ x: 50, y: 50 }, { x: 80, y: 50 }), 1.5);
+  assert.equal(fitZoom({ x: 50, y: 50 }, { x: 54.5, y: 50 }), 5);
+  assert.equal(fitZoom({ x: 50, y: 50 }, { x: 50, y: 50 }), 5);
   assert.deepEqual(fitFocus({ x: 80, y: 20 }, 1), { x: 50, y: 50 });
   assert.deepEqual(fitFocus({ x: 80, y: 20 }, 2.5), { x: 80, y: 20 });
 });
