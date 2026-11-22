@@ -1,17 +1,31 @@
 "use strict";
 
+// Reveal timing is in milliseconds from the moment the result opens.
 const q = id => document.getElementById(id);
+const TIMELINE = { land: 450, pull: 800, fly: 1950, flyLength: 700, hit: 2650, gauge: 2850, gaugeLength: 500, card: 3550, bar: 3800, barLength: 1000, stamp: 4850, ticker: 5200 };
 
 const revealRoot = q("result");
 const mapWorld = q("map-world");
+const skipButton = q("skip-reveal");
 const targetHsv = rgbToHsv(SITCON_GREEN);
+
+let current = null;
 
 function wheelPosition({ hue, saturation }) {
   const angle = hue * Math.PI / 180;
   return { x: 50 + Math.sin(angle) * saturation * 50, y: 50 - Math.cos(angle) * saturation * 50 };
 }
 
+// ---- Visual helpers -----------------------------------------------------
+const easeOut = t => 1 - (1 - t) ** 3;
+const easeOutQuint = t => 1 - (1 - t) ** 5;
 const pct = value => value.toFixed(2) + "%";
+
+function restart(element, className) {
+  element.classList.remove(className);
+  void element.offsetWidth;
+  element.classList.add(className);
+}
 
 function setLine(from, to) {
   for (const id of ["laser", "laser-glow"]) {
@@ -74,13 +88,22 @@ function showFinal({ displayed, score, guess, target, valueGuess, valueTarget })
   q("tac-fill").style.width = score / 10 + "%";
   q("ticker-track").parentElement.classList.add("on");
   q("tac-card").classList.add("on");
+  skipButton.hidden = true;
+}
+
+// ---- Public entry points ------------------------------------------------
+function stopReveal() {
+  current?.cancel();
+  current = null;
 }
 
 function playReveal({ selection, displayed, score }) {
+  stopReveal();
   const guess = wheelPosition(selection);
   const target = wheelPosition(targetHsv);
   const mid = { x: (guess.x + target.x) / 2, y: (guess.y + target.y) / 2 };
   // Close pins get a "zoom to fit" so the distance tag has room.
+  const gap = Math.hypot(guess.x - target.x, guess.y - target.y);
   const zoom = fitZoom(guess, target);
   const focus = fitFocus(mid, zoom);
   mapWorld.style.setProperty("--zoom", zoom);
@@ -101,5 +124,115 @@ function playReveal({ selection, displayed, score }) {
   q("map-flash").style.setProperty("--tx", pct(target.x));
   q("map-flash").style.setProperty("--ty", pct(target.y));
   setTicker(SITCON_GREEN);
-  showFinal(data);
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    showFinal(data);
+    return;
+  }
+
+  // Reset to the pre-reveal state.
+  revealRoot.dataset.reveal = "running";
+  skipButton.hidden = false;
+  const staged = [".vgauge", ".vg-mark", ".pin", ".range-tag", ".map-lines", ".tac-card", ".stamp", ".ticker-window", ".map-world"];
+  revealRoot.querySelectorAll(staged.join()).forEach(element => element.classList.remove("on", "out", "go", "thump", "hot"));
+  revealRoot.querySelectorAll(".ripple, .map-flash").forEach(element => element.classList.remove("go", "late"));
+  setLine(guess, guess);
+  q("spark").style.opacity = "";
+  setGauge(valueGuess, valueGuess);
+  q("vg-tag").textContent = "";
+  q("range-tag").textContent = "0.0";
+  q("distance").textContent = "0.0";
+  q("score-points").textContent = "0";
+  q("tac-fill").style.width = "0%";
+
+  const events = [
+    [0, () => q("pin-guess").classList.add("on")],
+    [TIMELINE.land, () => {
+      restart(q("ripple-guess-a"), "go");
+      q("ripple-guess-b").classList.add("late");
+      restart(q("ripple-guess-b"), "go");
+      restart(q("map"), "thump");
+    }],
+    [TIMELINE.pull, () => mapWorld.classList.add("out")],
+    [TIMELINE.fly, () => {
+      q("range-tag").classList.add("on");
+      revealRoot.querySelector(".map-lines").classList.add("on");
+    }],
+    [TIMELINE.hit, () => {
+      setLine(guess, target);
+      q("spark").style.opacity = "0";
+      q("pin-target").classList.add("on");
+      q("ripple-hit-b").classList.add("late");
+      for (const id of ["ripple-hit-a", "ripple-hit-b", "map-flash"]) restart(q(id), "go");
+      restart(q("map"), "thump");
+    }],
+    [TIMELINE.gauge, () => q("vgauge").classList.add("on")],
+    [TIMELINE.card, () => q("tac-card").classList.add("on")],
+    [TIMELINE.stamp, () => {
+      q("grade").classList.add("on");
+      restart(q("tac-card"), "thump");
+    }],
+    [TIMELINE.ticker, () => q("ticker-track").parentElement.classList.add("on")],
+  ];
+
+  const started = performance.now();
+  const total = TIMELINE.ticker + 700;
+  let frame = 0;
+  let next = 0;
+
+  function tick(now) {
+    const elapsed = now - started;
+    while (next < events.length && elapsed >= events[next][0]) events[next++][1]();
+
+    if (elapsed >= TIMELINE.fly && elapsed < TIMELINE.hit) {
+      const progress = easeOutQuint(Math.min(1, (elapsed - TIMELINE.fly) / TIMELINE.flyLength));
+      const head = { x: guess.x + (target.x - guess.x) * progress, y: guess.y + (target.y - guess.y) * progress };
+      setLine(guess, head);
+      mapWorld.style.setProperty("--mx", pct((guess.x + head.x) / 2));
+      mapWorld.style.setProperty("--my", pct((guess.y + head.y) / 2));
+      q("range-tag").textContent = (displayed * progress).toFixed(1);
+    } else if (elapsed >= TIMELINE.hit && next > 4) {
+      mapWorld.style.setProperty("--mx", pct(mid.x));
+      mapWorld.style.setProperty("--my", pct(mid.y));
+      q("range-tag").textContent = displayed.toFixed(1);
+      q("distance").textContent = displayed.toFixed(1);
+    }
+
+    if (elapsed >= TIMELINE.gauge && elapsed < TIMELINE.gauge + TIMELINE.gaugeLength + 50) {
+      const progress = easeOutQuint(Math.min(1, (elapsed - TIMELINE.gauge) / TIMELINE.gaugeLength));
+      const head = valueGuess + (valueTarget - valueGuess) * progress;
+      setGauge(valueGuess, head);
+      q("vg-tag").textContent = gaugeText(Math.round((valueGuess - valueTarget) * progress));
+      if (progress === 1 && !q("vg-target").classList.contains("hot")) q("vg-target").classList.add("hot");
+    }
+
+    if (elapsed >= TIMELINE.bar) {
+      const progress = easeOut(Math.min(1, (elapsed - TIMELINE.bar) / TIMELINE.barLength));
+      q("tac-fill").style.width = score / 10 * progress + "%";
+      q("score-points").textContent = Math.round(score * progress);
+    }
+
+    if (elapsed < total) frame = requestAnimationFrame(tick);
+    else finish();
+  }
+
+  function finish() {
+    showFinal(data);
+    current = null;
+  }
+
+  current = {
+    cancel() {
+      cancelAnimationFrame(frame);
+    },
+    skip() {
+      this.cancel();
+      showFinal(data);
+      current = null;
+    },
+  };
+  frame = requestAnimationFrame(tick);
 }
+
+skipButton.addEventListener("click", () => current?.skip());
+q("map").addEventListener("click", () => current?.skip());

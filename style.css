@@ -626,6 +626,49 @@ dialog p + p { margin-top: .6rem; }
 .ticker-track span { padding-right: 2.5rem; }
 .ticker-track b { color: var(--accent); font-weight: 700; }
 
+/* Staged reveal. Without data-reveal the final state shows. */
+#result[data-reveal="running"] .map-world { --k: 2.6; transform: scale(2.6); }
+#result[data-reveal="running"] .map-world.out { --k: var(--zoom, 1); transform: translate(var(--zx, 0%), var(--zy, 0%)) scale(var(--zoom, 1)); transition: transform .85s cubic-bezier(.55, 0, .15, 1); }
+#result[data-reveal="running"] .pin:not(.on),
+#result[data-reveal="running"] .range-tag:not(.on),
+#result[data-reveal="running"] .laser-glow, #result[data-reveal="running"] .laser, #result[data-reveal="running"] .spark { visibility: hidden; }
+#result[data-reveal="running"] .map-lines.on .laser-glow, #result[data-reveal="running"] .map-lines.on .laser, #result[data-reveal="running"] .map-lines.on .spark { visibility: visible; }
+#result[data-reveal="running"] .vgauge:not(.on) { visibility: hidden; }
+#result[data-reveal="running"] .vgauge.on { animation: card-in .35s ease-out both; }
+#result[data-reveal="running"] .vg-mark.hot { animation: thump .3s ease-out; }
+#result[data-reveal="running"] .tac-card:not(.on) { opacity: 0; transform: translateY(2.5rem); }
+#result[data-reveal="running"] .tac-card.on { animation: card-in .5s cubic-bezier(.2, .9, .25, 1.05) both; }
+#result[data-reveal="running"] .stamp:not(.on), #result[data-reveal="running"] .ticker-window:not(.on) { visibility: hidden; }
+#result[data-reveal="running"] .stamp.on { animation: stamp-slam .5s cubic-bezier(.3, 1.4, .5, 1) both; }
+#result[data-reveal="running"] .pin.on { animation: pin-drop .5s cubic-bezier(.5, 0, .9, .5) both; }
+#result[data-reveal="running"] .pin-target.on { animation: pin-pop .5s cubic-bezier(.2, 1.6, .4, 1) both; }
+#result[data-reveal="running"] .range-tag.on { animation: tag-pop .25s ease-out both; }
+#result[data-reveal="running"] .ripple.go { animation: ripple 1s ease-out both; }
+#result[data-reveal="running"] .ripple.go.late { animation-delay: .22s; }
+#result[data-reveal="running"] .map-flash.go { animation: flash .7s ease-out both; }
+#result[data-reveal="running"] .map.thump { animation: thump .32s ease-out; }
+#result[data-reveal="running"] .tac-card.thump { animation: thump .32s ease-out; }
+#result[data-reveal="running"] .ticker-window.on { animation: ticker-open .6s steps(24) both; }
+.ticker-window.on .ticker-track { animation: ticker-run 16s linear infinite; }
+@keyframes pin-drop {
+  0% { opacity: 0; transform: translateY(-5rem) scale(1.6); }
+  40% { opacity: 1; }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes pin-pop { 0% { opacity: 0; transform: scale(.2); } 100% { opacity: 1; transform: none; } }
+@keyframes tag-pop { from { opacity: 0; translate: 0 .5rem; } to { opacity: 1; translate: 0 0; } }
+@keyframes ripple { 0% { opacity: .95; transform: scale(.15); } 100% { opacity: 0; transform: scale(3.2); } }
+@keyframes flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes thump { 0%, 100% { translate: 0 0; } 25% { translate: 0 5px; } 55% { translate: 0 -2px; } }
+@keyframes card-in { from { opacity: 0; transform: translateY(2.5rem); } to { opacity: 1; transform: none; } }
+@keyframes stamp-slam {
+  0% { opacity: 0; transform: rotate(-20deg) scale(3.4); }
+  55% { opacity: 1; transform: rotate(-6deg) scale(.9); }
+  75% { transform: rotate(-6deg) scale(1.05); }
+  100% { opacity: 1; transform: rotate(-6deg) scale(1); }
+}
+@keyframes ticker-open { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+@keyframes ticker-run { to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) {
   .laser, .tac-bar i::after, .ticker-window.on .ticker-track { animation: none; }
 }

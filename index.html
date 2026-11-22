@@ -12,13 +12,13 @@
   <meta name="theme-color" content="#202924">
   <meta name="description" content="對照 SITCON 標準綠，在全彩色盤上選色並調整明度，送出後揭曉你差多少。">
   <title>SITCON Color Challenge｜調出 SITCON 綠</title>
-  <link rel="stylesheet" href="style.css?v=c456cd91a17e">
+  <link rel="stylesheet" href="style.css?v=911195650783">
   <script defer src="color.js?v=5b9f0aee43bf"></script>
   <script defer src="round.js?v=28a60940284b"></script>
   <script defer src="tilt.js?v=011c209c47a3"></script>
   <script defer src="card.js?v=0ea64d00a26c"></script>
-  <script defer src="reveal.js?v=0b7ea6b117a1"></script>
-  <script defer src="game.js?v=65aebf1fe67c"></script>
+  <script defer src="reveal.js?v=1381539e9298"></script>
+  <script defer src="game.js?v=d14529c2e3f3"></script>
   <script defer src="share.js?v=6e403be12697"></script>
 </head>
 <body>
@@ -117,6 +117,9 @@
           <section class="radar" aria-label="結算動畫：你的選色與 SITCON 標準綠在色盤上的位置">
             <div class="radar-bar">
               <span class="radar-tag" aria-hidden="true">TARGET LOCK</span>
+              <span class="radar-tools">
+                <button type="button" class="radar-button" id="skip-reveal">略過動畫</button>
+              </span>
             </div>
             <div class="map" id="map" aria-hidden="true">
               <div class="map-world" id="map-world">

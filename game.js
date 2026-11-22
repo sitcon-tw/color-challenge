@@ -157,6 +157,7 @@ byId("tilt-button").addEventListener("click", () => {
 });
 
 function beginRound() {
+  stopReveal();
   tiltController?.abort();
   clearInterval(clock);
   clock = null;
