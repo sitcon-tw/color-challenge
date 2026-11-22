@@ -452,6 +452,8 @@ dialog p + p { margin-top: .6rem; }
 .radar-button:hover { background: #ffffff22; }
 .radar :focus-visible { outline-color: var(--accent); }
 .map {
+  --k: var(--zoom, 1);
+  --camera: translate(var(--zx, 0%), var(--zy, 0%)) scale(var(--k));
   position: relative;
   width: var(--map-width);
   align-self: center;
@@ -468,20 +470,21 @@ dialog p + p { margin-top: .6rem; }
   background: repeating-conic-gradient(from -.3deg, #7dd3fc99 0 .7deg, transparent .7deg 6deg);
   mask: radial-gradient(closest-side, transparent calc(100% - 5px), black calc(100% - 5px));
 }
-.map-world {
-  --k: var(--zoom, 1);
+.map-viewport {
+  position: absolute;
+  inset: 0;
+  clip-path: circle(50%);
+}
+.map-world, .map-wheel {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  /* Zoom about the guess pin, then shift so the midpoint of both pins is centered. */
+  /* Both layers follow the same camera. Pins can extend past the rim. */
   transform-origin: var(--gx, 50%) var(--gy, 50%);
-  transform: translate(var(--zx, 0%), var(--zy, 0%)) scale(var(--zoom, 1));
+  transform: var(--camera);
 }
 .map-wheel {
-  position: absolute;
-  inset: 0;
   overflow: hidden;
-  border-radius: 50%;
   background: radial-gradient(closest-side, white, transparent), conic-gradient(#f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
   box-shadow: 0 0 0 2px #0e1511, 0 0 28px #38bdf833;
 }
@@ -665,8 +668,8 @@ dialog p + p { margin-top: .6rem; }
 }
 
 /* Staged reveal. Without data-reveal the final state shows. */
-#result[data-reveal="running"] .map-world { --k: 2.6; transform: scale(2.6); }
-#result[data-reveal="running"] .map-world.out { --k: var(--zoom, 1); transform: translate(var(--zx, 0%), var(--zy, 0%)) scale(var(--zoom, 1)); transition: transform .85s cubic-bezier(.55, 0, .15, 1); }
+#result[data-reveal="running"] .map:not(.out) { --k: 2.6; --camera: scale(var(--k)); }
+#result[data-reveal="running"] .map.out :is(.map-wheel, .map-world) { transition: transform .85s cubic-bezier(.55, 0, .15, 1); }
 #result[data-reveal="running"] .pin:not(.on),
 #result[data-reveal="running"] .laser-glow, #result[data-reveal="running"] .laser, #result[data-reveal="running"] .spark { visibility: hidden; }
 #result[data-reveal="running"] .map-lines.on .laser-glow, #result[data-reveal="running"] .map-lines.on .laser, #result[data-reveal="running"] .map-lines.on .spark { visibility: visible; }

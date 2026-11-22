@@ -8,6 +8,7 @@ const TIMELINE = { land: 450, pull: 800, fly: 1950, flyLength: 700, hit: 2650, g
 const SOUND_KEY = "color-challenge-sound";
 
 const revealRoot = q("result");
+const map = q("map");
 const mapWorld = q("map-world");
 const soundToggle = q("sound-toggle");
 const motionControl = q("motion-control");
@@ -185,7 +186,6 @@ function setMapZoom(zoom) {
 }
 
 function separateNearbyPins(guess, target, zoom) {
-  const map = q("map");
   const pin = q("pin-guess");
   mapWorld.style.setProperty("--guess-side", guess.x <= target.x ? -1 : 1);
   pinObserver = new ResizeObserver(() => {
@@ -217,7 +217,9 @@ function showFinal({ score, guess, target, valueGuess, valueTarget, zoom }, keep
   setGauge(valueGuess, valueTarget);
   delete revealRoot.dataset.reveal;
   // A camera transition can still be interpolating when the reveal is skipped.
-  mapWorld.getAnimations().forEach(animation => animation.cancel());
+  for (const layer of map.querySelectorAll(".map-world, .map-wheel")) {
+    layer.getAnimations().forEach(animation => animation.cancel());
+  }
   setMapZoom(zoom);
   setLine(guess, target);
   q("score-points").textContent = score;
@@ -246,9 +248,9 @@ function playReveal({ selection, score }) {
   mapWorld.classList.toggle("pins-coincide", samePosition);
   if (!samePosition) separateNearbyPins(guess, target, zoom);
   const focus = fitFocus(mid, zoom);
-  mapWorld.style.setProperty("--zoom", zoom);
-  mapWorld.style.setProperty("--zx", zoom === 1 ? "0%" : pct(50 - guess.x - zoom * (focus.x - guess.x)));
-  mapWorld.style.setProperty("--zy", zoom === 1 ? "0%" : pct(50 - guess.y - zoom * (focus.y - guess.y)));
+  map.style.setProperty("--zoom", zoom);
+  map.style.setProperty("--zx", zoom === 1 ? "0%" : pct(50 - guess.x - zoom * (focus.x - guess.x)));
+  map.style.setProperty("--zy", zoom === 1 ? "0%" : pct(50 - guess.y - zoom * (focus.y - guess.y)));
   const valueGuess = selection.value;
   const valueTarget = targetHsv.value;
   const data = { score, guess, target, valueGuess, valueTarget, zoom };
@@ -265,8 +267,8 @@ function playReveal({ selection, score }) {
     q(id).style.setProperty("--x", pct(point.x));
     q(id).style.setProperty("--y", pct(point.y));
   }
-  mapWorld.style.setProperty("--gx", pct(guess.x));
-  mapWorld.style.setProperty("--gy", pct(guess.y));
+  map.style.setProperty("--gx", pct(guess.x));
+  map.style.setProperty("--gy", pct(guess.y));
   q("map-flash").style.setProperty("--tx", pct(target.x));
   q("map-flash").style.setProperty("--ty", pct(target.y));
   if (motionPreference.matches || effectsPaused) {
@@ -278,7 +280,7 @@ function playReveal({ selection, score }) {
   setResultMotion(true);
   revealRoot.dataset.reveal = "running";
   motionControl.textContent = "略過動畫";
-  const staged = [".vgauge", ".vg-mark", ".pin", ".map-lines", ".tac-card", ".stamp", ".ticker-track", ".map-world"];
+  const staged = [".vgauge", ".vg-mark", ".pin", ".map-lines", ".tac-card", ".stamp", ".ticker-track", ".map"];
   revealRoot.querySelectorAll(staged.join()).forEach(element => element.classList.remove("on", "out", "go", "thump", "hot"));
   revealRoot.querySelectorAll(".ripple, .map-flash").forEach(element => element.classList.remove("go", "late"));
   setMapZoom(Number(getComputedStyle(mapWorld).getPropertyValue("--k")));
@@ -314,7 +316,7 @@ function playReveal({ selection, score }) {
       restart(q("ripple-guess-b"), "go");
       restart(q("map"), "thump");
     }],
-    [TIMELINE.pull, () => mapWorld.classList.add("out")],
+    [TIMELINE.pull, () => map.classList.add("out")],
     [TIMELINE.fly, () => {
       revealRoot.querySelector(".map-lines").classList.add("on");
     }],
@@ -415,7 +417,7 @@ motionControl.addEventListener("click", () => {
   effectsPaused = revealRoot.hasAttribute("data-motion");
   setResultMotion(!effectsPaused);
 });
-q("map").addEventListener("click", () => current?.skip());
+map.addEventListener("click", () => current?.skip());
 motionPreference.addEventListener("change", () => {
   if (current) {
     if (motionPreference.matches) current.skip();

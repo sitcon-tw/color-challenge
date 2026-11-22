@@ -22,12 +22,12 @@
   <meta property="og:image:alt" content="調出 SITCON 綠。彩色色環中央是學生計算機年會的標準綠 Logo。">
   <meta name="twitter:card" content="summary_large_image">
   <title>SITCON Color Challenge｜調出 SITCON 綠</title>
-  <link rel="stylesheet" href="style.css?v=95b8f5c37f32">
+  <link rel="stylesheet" href="style.css?v=af0de38a2910">
   <script defer src="color.js?v=689a51c979c6"></script>
   <script defer src="round.js?v=28a60940284b"></script>
   <script defer src="tilt.js?v=011c209c47a3"></script>
   <script defer src="card.js?v=c47c07d4240b"></script>
-  <script defer src="reveal.js?v=15ba6fe92d2f"></script>
+  <script defer src="reveal.js?v=6183c4a2d10f"></script>
   <script defer src="game.js?v=89a08be7b090"></script>
   <script defer src="share.js?v=43e1c8b62188"></script>
 </head>
@@ -134,8 +134,10 @@
           </div>
           <div class="map-key"><span>你的落點</span><span class="target-key">標準綠的位置</span></div>
           <div class="map" id="map" aria-hidden="true">
+            <div class="map-viewport">
+              <div class="map-wheel"><div class="map-flash" id="map-flash"></div></div>
+            </div>
             <div class="map-world" id="map-world">
-              <div class="map-wheel"></div>
               <svg class="map-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
                 <line class="laser-glow" id="laser-glow" x1="0" y1="0" x2="0" y2="0"/>
                 <line class="laser" id="laser" x1="0" y1="0" x2="0" y2="0"/>
@@ -147,7 +149,6 @@
               <span class="ripple hit" id="ripple-hit-b"></span>
               <span class="pin pin-target" id="pin-target"><i></i></span>
               <span class="pin pin-guess" id="pin-guess"><i></i></span>
-              <div class="map-flash" id="map-flash"></div>
             </div>
           </div>
           <p class="map-caption">
