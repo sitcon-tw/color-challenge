@@ -185,25 +185,6 @@ function setMapZoom(zoom) {
   if (label.textContent !== text) label.textContent = text;
 }
 
-function separateNearbyPins(guess, target, zoom) {
-  const pin = q("pin-guess");
-  mapWorld.style.setProperty("--guess-side", guess.x <= target.x ? -1 : 1);
-  pinObserver = new ResizeObserver(() => {
-    const pixelsPerUnit = map.clientWidth * zoom / 100;
-    const head = pin.offsetWidth;
-    // The round head is one diameter wide; its tip extends below the circle.
-    const height = head * (1 + Math.SQRT2) / 2;
-    const clearance = 6; // Two 2px outlines and a small gap.
-    const dx = Math.abs(guess.x - target.x) * pixelsPerUnit;
-    const dy = Math.abs(guess.y - target.y) * pixelsPerUnit;
-    const shift = dy < height + clearance ? Math.max(0, (head + clearance - dx) / 2) : 0;
-    mapWorld.style.setProperty("--pin-shift", shift + "px");
-    mapWorld.classList.toggle("pins-spread", shift > 0);
-  });
-  pinObserver.observe(map);
-  pinObserver.observe(pin);
-}
-
 function setResultMotion(playing) {
   const enabled = playing && !motionPreference.matches;
   revealRoot.toggleAttribute("data-motion", enabled);
@@ -233,7 +214,7 @@ function stopReveal() {
   current?.cancel();
   current = null;
   pinObserver?.disconnect();
-  mapWorld.classList.remove("pins-spread");
+  mapWorld.classList.remove("pins-close");
   delete revealRoot.dataset.reveal;
   revealRoot.removeAttribute("data-motion");
 }
@@ -244,9 +225,18 @@ function playReveal({ selection, score }) {
   const target = wheelPoint(targetHsv);
   const mid = { x: (guess.x + target.x) / 2, y: (guess.y + target.y) / 2 };
   const zoom = fitZoom(guess, target);
-  const samePosition = wheelGapPercent(guess, target) === 0;
+  const gap = wheelGapPercent(guess, target);
+  const samePosition = gap === 0;
   mapWorld.classList.toggle("pins-coincide", samePosition);
-  if (!samePosition) separateNearbyPins(guess, target, zoom);
+  if (!samePosition) {
+    const pin = q("pin-guess");
+    pinObserver = new ResizeObserver(() => {
+      const distanceOnScreen = gap / 100 * zoom * map.clientWidth;
+      mapWorld.classList.toggle("pins-close", distanceOnScreen < pin.offsetWidth);
+    });
+    pinObserver.observe(map);
+    pinObserver.observe(pin);
+  }
   const focus = fitFocus(mid, zoom);
   map.style.setProperty("--zoom", zoom);
   map.style.setProperty("--zx", zoom === 1 ? "0%" : pct(50 - guess.x - zoom * (focus.x - guess.x)));
