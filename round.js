@@ -2,6 +2,14 @@
 
 const ROUND_DURATION = 30_000;
 
+// A touch that turned into page navigation must not become a pick when the finger lifts.
+function nextPickAction(action, dx, dy, released) {
+  if (action === "drag" || action === "cancel") return action;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 8) return released && action !== "grab" ? "pick" : action;
+  if (action === "tap" || (action === "horizontal" && Math.abs(dy) >= Math.abs(dx))) return "cancel";
+  return "drag";
+}
+
 class Round {
   constructor(mode, color) {
     this.mode = mode;
@@ -44,4 +52,4 @@ class Round {
   }
 }
 
-if (typeof module !== "undefined") module.exports = { Round };
+if (typeof module !== "undefined") module.exports = { Round, nextPickAction };

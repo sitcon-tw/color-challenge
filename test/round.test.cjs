@@ -1,8 +1,22 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
-const { Round } = require("../round.js");
+const { Round, nextPickAction } = require("../round.js");
 
 const initial = { hue: 120, saturation: 0.5, value: 150 };
+
+test("scrolling cancels a touch pick, while taps and deliberate drags can start it", () => {
+  for (const action of ["tap", "horizontal"]) {
+    assert.equal(nextPickAction(action, 2, 3, false), action);
+    assert.equal(nextPickAction(action, 2, 3, true), "pick");
+    const scrolled = nextPickAction(action, 2, -15, false);
+    assert.equal(scrolled, "cancel");
+    assert.equal(nextPickAction(scrolled, 0, 0, true), "cancel");
+  }
+  assert.equal(nextPickAction("horizontal", -14, 3, false), "drag");
+  assert.equal(nextPickAction("grab", 0, 0, true), "grab");
+  assert.equal(nextPickAction("grab", 0, -15, false), "drag");
+  assert.equal(nextPickAction("tap", 14, 0, true), "cancel");
+});
 
 test("the countdown waits for a change and rejects a pick at its deadline", () => {
   for (const [control, values] of [["wheel", { hue: 90 }], ["brightness", { value: 128 }]]) {

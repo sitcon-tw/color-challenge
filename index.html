@@ -22,13 +22,13 @@
   <meta property="og:image:alt" content="調出 SITCON 綠。彩色色環中央是學生計算機年會的標準綠 Logo。">
   <meta name="twitter:card" content="summary_large_image">
   <title>SITCON Color Challenge｜調出 SITCON 綠</title>
-  <link rel="stylesheet" href="style.css?v=b23fc278439c">
+  <link rel="stylesheet" href="style.css?v=817400752d62">
   <script defer src="color.js?v=689a51c979c6"></script>
-  <script defer src="round.js?v=28a60940284b"></script>
+  <script defer src="round.js?v=dc7fed8da1c0"></script>
   <script defer src="tilt.js?v=011c209c47a3"></script>
   <script defer src="card.js?v=c47c07d4240b"></script>
   <script defer src="reveal.js?v=282a1c1e3792"></script>
-  <script defer src="game.js?v=fbcfaeb5a6ef"></script>
+  <script defer src="game.js?v=1c16979c145a"></script>
   <script defer src="share.js?v=43e1c8b62188"></script>
 </head>
 <body>
@@ -56,7 +56,7 @@
           <legend class="visually-hidden">挑戰模式</legend>
           <label><input class="visually-hidden" type="radio" name="mode" value="normal" data-hint="第一次調色開始計時，調好就能送出。" checked><span>一般模式</span></label>
           <label><input class="visually-hidden" type="radio" name="mode" value="timed" data-hint="第一次調色後倒數 30 秒。可以提早送出，時間到自動揭曉。"><span>30 秒挑戰</span></label>
-          <label><input class="visually-hidden" type="radio" name="mode" value="oneshot" data-hint="色盤和明度各點一次，按下就鎖定。用鍵盤可先用方向鍵瞄準，再按 Enter 鎖定。"><span>一發入魂</span></label>
+          <label><input class="visually-hidden" type="radio" name="mode" value="oneshot" data-hint="色盤和明度各按一次就鎖定。沿盤邊空白處可捲頁。"><span>一發入魂</span></label>
           <label><input class="visually-hidden" type="radio" name="mode" value="gyro" data-hint="拿穩手機後啟用感應，傾斜手機選色，明度用滑桿調整。"><span>陀螺儀</span></label>
         </fieldset>
         <div class="round-note">
@@ -92,7 +92,7 @@
         <section class="instrument" aria-labelledby="wheel-title">
           <header class="instrument-header">
             <h2 id="wheel-title"><span class="dial-icon" aria-hidden="true"></span>全彩色盤</h2>
-            <span class="dial-hint" id="wheel-hint" role="status">越靠外圈越飽和</span>
+            <span class="dial-hint" id="wheel-hint" role="status">點選色盤，拖圓點微調</span>
           </header>
           <div class="wheel-stage">
             <div class="dial">
@@ -101,7 +101,7 @@
               <span class="angle south" aria-hidden="true">青</span>
               <span class="angle west" aria-hidden="true">紫</span>
               <div class="wheel" id="wheel" role="group" tabindex="0" aria-label="色相與飽和度"
-                   aria-describedby="wheel-keys mode-hint">
+                   aria-describedby="wheel-hint wheel-keys mode-hint">
                 <span class="cursor" id="cursor"></span>
               </div>
             </div>
@@ -109,7 +109,9 @@
           </div>
           <div class="value-control">
             <div class="value-label"><label for="brightness">明度</label><span id="brightness-hint" role="status">由暗到亮</span></div>
-            <input id="brightness" type="range" min="0" max="255" step="1" aria-describedby="mode-hint">
+            <div class="value-slider">
+              <input id="brightness" type="range" min="0" max="255" step="1" aria-describedby="mode-hint">
+            </div>
           </div>
         </section>
 
@@ -240,7 +242,7 @@
   <dialog id="help" aria-labelledby="help-title">
     <h2 id="help-title">玩法說明</h2>
     <ol>
-      <li>看著右邊的 SITCON 標準綠，在色盤上點選或拖曳，左邊的 SITCON Logo 會跟著變色。越靠近外圈，顏色越飽和。</li>
+      <li>看著右邊的 SITCON 標準綠，點一下色盤選色，或拖動圓點微調。越靠近外圈，顏色越飽和。一般模式和 30 秒挑戰都能從圓點以外的盤面上下捲頁。</li>
       <li>左右拖曳明度滑桿，調整 SITCON Logo 的深淺。</li>
       <li>送出後揭曉雙方的色碼。RGB 距離是將紅、綠、藍的差值各自平方，相加後再開根號。距離越小，配色越準。</li>
     </ol>

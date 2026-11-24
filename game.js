@@ -9,7 +9,7 @@ const shareButton = byId("share-result");
 const replayButton = byId("replay");
 let round;
 let clock = null;
-let dragPointer = null;
+let gesture = null;
 let tiltController = null;
 
 function renderSelection() {
@@ -31,7 +31,10 @@ function renderLocks() {
   wheel.setAttribute("aria-disabled", String(!manualWheel));
   wheel.tabIndex = manualWheel ? 0 : -1;
   brightness.disabled = round.locked.has("brightness");
-  byId("wheel-hint").textContent = round.mode === "gyro" ? "傾斜手機移動游標" : wheelLocked ? "色盤已鎖定" : "越靠外圈越飽和";
+  const hint = byId("wheel-hint");
+  if (round.mode === "gyro") hint.textContent = "傾斜手機移動游標";
+  else if (round.mode === "oneshot") hint.textContent = wheelLocked ? "色盤已鎖定" : "按下即鎖定";
+  else hint.textContent = "點選色盤，拖圓點微調";
   byId("brightness-hint").textContent = brightness.disabled ? "明度已鎖定" : "由暗到亮";
 }
 
@@ -47,25 +50,85 @@ function pick(control, values, lock = false) {
   if (clock === null) clock = setInterval(updateClock, 200);
 }
 
-function pickFromWheel(event, lock) {
+function pickFromWheel(clientX, clientY, lock) {
   const bounds = wheel.getBoundingClientRect();
-  const x = (event.clientX - bounds.left) / bounds.width * 2 - 1;
-  const y = (event.clientY - bounds.top) / bounds.height * 2 - 1;
+  const x = (clientX - bounds.left) / bounds.width * 2 - 1;
+  const y = (clientY - bounds.top) / bounds.height * 2 - 1;
   pick("wheel", colorAtWheelPoint(x, y, round.aim.hue), lock);
 }
 
-wheel.addEventListener("pointerdown", event => {
-  if (!event.isPrimary || event.button !== 0 || wheel.tabIndex < 0) return;
-  wheel.focus({ preventScroll: true });
-  if (round.mode !== "oneshot") {
-    dragPointer = event.pointerId;
-    wheel.setPointerCapture(dragPointer);
+function brightnessTrack() {
+  const bounds = brightness.getBoundingClientRect();
+  // The input is two thumbs tall. Its value spans the travel of the thumb's center.
+  const radius = bounds.height / 4;
+  return { start: bounds.left + radius, length: bounds.width - 2 * radius, radius };
+}
+
+function pickBrightnessAt(clientX, _clientY, lock) {
+  const { start, length } = brightnessTrack();
+  const position = (clientX - start) / length;
+  pick("brightness", { value: Math.round(255 * Math.max(0, Math.min(1, position))) }, lock);
+}
+
+function bindPicker(surface, control, pickAt) {
+  surface.addEventListener("pointerdown", event => {
+    if (!event.isPrimary) {
+      gesture = null;
+      return;
+    }
+    if (event.button !== 0 || control.disabled || control.tabIndex < 0) return;
+    // Fine pointers use the native range. Touch hits its scrollable wrapper.
+    if (event.target === brightness && round.mode !== "oneshot") return;
+    if (round.mode === "oneshot") {
+      event.preventDefault();
+      control.focus({ preventScroll: true });
+      pickAt(event.clientX, event.clientY, true);
+      return;
+    }
+    let action = "drag";
+    let offsetX = 0;
+    let offsetY = 0;
+    if (event.pointerType === "touch") {
+      if (control === brightness) {
+        action = "horizontal";
+        const { start, length, radius } = brightnessTrack();
+        const thumbX = start + length * brightness.valueAsNumber / 255;
+        if (Math.abs(thumbX - event.clientX) <= radius) offsetX = thumbX - event.clientX;
+      } else if (event.target === cursor) {
+        action = "grab";
+        const dot = cursor.getBoundingClientRect();
+        offsetX = dot.left + dot.width / 2 - event.clientX;
+        offsetY = dot.top + dot.height / 2 - event.clientY;
+      } else action = "tap";
+    }
+    gesture = { id: event.pointerId, control, action, x: event.clientX, y: event.clientY, offsetX, offsetY };
+    surface.setPointerCapture(event.pointerId);
+    if (action === "drag") {
+      control.focus({ preventScroll: true });
+      pickAt(event.clientX, event.clientY, false);
+    }
+  });
+
+  function update(event) {
+    if (gesture?.id !== event.pointerId || gesture.control !== control) return;
+    const { action, x, y, offsetX, offsetY } = gesture;
+    gesture.action = nextPickAction(action, event.clientX - x, event.clientY - y, event.type === "pointerup");
+    if (gesture.action === "pick") pickAt(x + offsetX, y + offsetY, false);
+    else if (gesture.action === "drag") pickAt(event.clientX + offsetX, event.clientY + offsetY, false);
   }
-  pickFromWheel(event, true);
-});
-wheel.addEventListener("pointermove", event => {
-  if (dragPointer === event.pointerId && wheel.hasPointerCapture(dragPointer)) pickFromWheel(event, false);
-});
+  function cancel(event) {
+    if (gesture?.id === event.pointerId && gesture.control === control) gesture = null;
+  }
+  surface.addEventListener("pointermove", update);
+  surface.addEventListener("pointerup", event => {
+    update(event);
+    cancel(event);
+  });
+  surface.addEventListener("pointercancel", cancel);
+  surface.addEventListener("lostpointercapture", cancel);
+}
+bindPicker(wheel, wheel, pickFromWheel);
+bindPicker(brightness.parentElement, brightness, pickBrightnessAt);
 
 function lockFromKeyboard(event, control, values) {
   if (round.mode !== "oneshot" || (event.key !== "Enter" && event.key !== " ")) return false;
@@ -94,15 +157,6 @@ wheel.addEventListener("keydown", event => {
 });
 brightness.addEventListener("input", () => pick("brightness", { value: brightness.valueAsNumber }));
 brightness.addEventListener("keydown", event => lockFromKeyboard(event, "brightness", { value: brightness.valueAsNumber }));
-brightness.addEventListener("pointerdown", event => {
-  if (round.mode !== "oneshot" || !event.isPrimary || event.button !== 0) return;
-  event.preventDefault();
-  // The range is two thumbs tall. Its center-to-center travel excludes one thumb.
-  const bounds = brightness.getBoundingClientRect();
-  const thumb = bounds.height / 2;
-  const position = (event.clientX - bounds.left - thumb / 2) / (bounds.width - thumb);
-  pick("brightness", { value: Math.round(255 * Math.max(0, Math.min(1, position))) }, true);
-});
 
 function switchScreen(showResult) {
   byId("play").hidden = showResult;
@@ -188,7 +242,7 @@ function beginRound() {
   tiltController?.abort();
   clearInterval(clock);
   clock = null;
-  dragPointer = null;
+  gesture = null;
   const choice = modes.querySelector(":checked");
   round = new Round(choice.value, randomStartingColor());
   byId("mode-hint").textContent = choice.dataset.hint;
@@ -211,6 +265,7 @@ function finishRound(now = Date.now()) {
   if (byId("play").hidden) return;
   tiltController?.abort();
   clearInterval(clock);
+  gesture = null;
   const modeLabel = modes.querySelector(":checked").labels[0].textContent.trim();
   const modeSummary = modeLabel + " · " + round.resultTime(now);
   const rgb = hsvToRgb(round.selection);

@@ -196,7 +196,7 @@ h2 { gap: .65rem; font-size: 1.15rem; font-weight: 750; line-height: 1.4; }
   background: radial-gradient(closest-side, white, transparent),
     conic-gradient(#f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
   cursor: crosshair;
-  touch-action: none;
+  touch-action: pan-y pinch-zoom;
   user-select: none;
 }
 .wheel::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: black; opacity: var(--shade, .1); }
@@ -208,7 +208,16 @@ h2 { gap: .65rem; font-size: 1.15rem; font-weight: 750; line-height: 1.4; }
   border-radius: 50%;
   box-shadow: 0 0 0 1.5px #202924, inset 0 0 0 1px #202924;
   transform: translate(-50%, -50%);
-  pointer-events: none;
+  touch-action: none;
+  cursor: grab;
+}
+.cursor:active { cursor: grabbing; }
+.wheel[aria-disabled="true"] .cursor { pointer-events: none; }
+.value-slider { touch-action: pan-y pinch-zoom; }
+@media (any-pointer: coarse) {
+  .cursor::before { content: ""; position: absolute; inset: 50% auto auto 50%; width: 44px; height: 44px; border-radius: 50%; transform: translate(-50%, -50%); }
+  /* The wrapper distinguishes vertical page scrolls before the range can change on touch-down. */
+  .value-slider #brightness { --thumb-size: max(22px, 1.25rem); pointer-events: none; }
 }
 .value-control { padding: .9rem 1.5rem .7rem; }
 .value-label { justify-content: space-between; font-size: .94rem; font-weight: 650; }
@@ -781,6 +790,7 @@ dialog p + p { margin-top: .6rem; }
   .angle { display: none; }
   .wheel { width: calc(100% - .85rem); }
   .value-control { padding: .7rem 1rem .4rem; }
+  .workbench[data-mode="oneshot"] :is(.wheel-stage, .value-control) { padding-inline: 28px; }
   .sample-panel { padding: .65rem .9rem; }
   .sample-stage { margin: .35rem 0 0; padding: 0; min-height: 0; background: none; }
   .sample-pair { padding: 0; border: 0; box-shadow: none; }
