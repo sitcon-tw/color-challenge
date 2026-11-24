@@ -243,7 +243,7 @@ function beginRound() {
   clearInterval(clock);
   clock = null;
   gesture = null;
-  const choice = modes.querySelector(":checked");
+  const choice = modes.selectedOptions[0];
   round = new Round(choice.value, randomStartingColor());
   byId("mode-hint").textContent = choice.dataset.hint;
   byId("guess-form").dataset.mode = round.mode;
@@ -266,7 +266,7 @@ function finishRound(now = Date.now()) {
   tiltController?.abort();
   clearInterval(clock);
   gesture = null;
-  const modeLabel = modes.querySelector(":checked").labels[0].textContent.trim();
+  const modeLabel = modes.selectedOptions[0].textContent.trim();
   const modeSummary = modeLabel + " · " + round.resultTime(now);
   const rgb = hsvToRgb(round.selection);
   const { differences, distance } = compareWithSitcon(rgb);
