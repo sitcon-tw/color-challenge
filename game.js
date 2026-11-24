@@ -5,6 +5,9 @@ const wheel = byId("wheel");
 const cursor = byId("cursor");
 const brightness = byId("brightness");
 const modes = byId("modes");
+const dial = byId("dial");
+const instrument = dial.closest(".instrument");
+const spinButton = byId("spin-wheel");
 const shareButton = byId("share-result");
 const replayButton = byId("replay");
 const playedModes = new Set();
@@ -12,13 +15,14 @@ const supportsTilt = Boolean(window.DeviceOrientationEvent && window.DOMMatrix);
 let round;
 let clock = null;
 let gesture = null;
+let spinAnimation = null;
 let tiltController = null;
 
 function renderSelection() {
-  const { hue, saturation, value } = round.aim;
-  const angle = hue * Math.PI / 180;
-  cursor.style.left = (50 + Math.sin(angle) * saturation * 50) + "%";
-  cursor.style.top = (50 - Math.cos(angle) * saturation * 50) + "%";
+  const { value } = round.aim;
+  const point = wheelPoint(round.aim, round.rotation);
+  cursor.style.left = point.x + "%";
+  cursor.style.top = point.y + "%";
   wheel.style.setProperty("--shade", 1 - round.selection.value / 255);
 
   brightness.value = value;
@@ -32,23 +36,26 @@ function renderLocks() {
   const manualWheel = !wheelLocked && round.mode !== "gyro";
   wheel.setAttribute("aria-disabled", String(!manualWheel));
   wheel.tabIndex = manualWheel ? 0 : -1;
-  brightness.disabled = round.locked.has("brightness");
+  if (round.mode !== "gyro") brightness.disabled = round.locked.has("brightness");
+  spinButton.hidden = !playedModes.size || round.spinDegrees > 0 || round.startedAt !== null;
   const hint = byId("wheel-hint");
+  hint.hidden = !spinButton.hidden;
   if (round.mode === "gyro") hint.textContent = "傾斜手機移動游標";
   else if (round.mode === "oneshot") hint.textContent = wheelLocked ? "色盤已鎖定" : "按下即鎖定";
-  else hint.textContent = "點選色盤，拖圓點微調";
-  byId("brightness-hint").textContent = brightness.disabled ? "明度已鎖定" : "由暗到亮";
+  else hint.textContent = round.spinDegrees ? "已轉向，拖圓點微調" : "點選色盤，拖圓點微調";
+  byId("brightness-hint").textContent = round.locked.has("brightness") ? "明度已鎖定" : "由暗到亮";
 }
 
 function pick(control, values, lock = false) {
-  if (byId("play").hidden) return;
+  if (byId("play").hidden || spinAnimation) return;
   if (round.mode === "gyro" && byId("submit-guess").disabled) return;
   const now = Date.now();
   if (round.expired(now)) return finishRound(now);
+  const firstPick = round.startedAt === null;
   if (!round.pick(control, values, lock, now)) return;
   renderSelection();
   if (round.locked.size === 2) return finishRound(now);
-  if (round.locked.has(control)) renderLocks();
+  if (firstPick || round.locked.has(control)) renderLocks();
   if (clock === null) clock = setInterval(updateClock, 200);
 }
 
@@ -56,7 +63,7 @@ function pickFromWheel(clientX, clientY, lock) {
   const bounds = wheel.getBoundingClientRect();
   const x = (clientX - bounds.left) / bounds.width * 2 - 1;
   const y = (clientY - bounds.top) / bounds.height * 2 - 1;
-  pick("wheel", colorAtWheelPoint(x, y, round.aim.hue), lock);
+  pick("wheel", colorAtWheelPoint(x, y, round.aim.hue, round.rotation), lock);
 }
 
 function brightnessTrack() {
@@ -78,7 +85,7 @@ function bindPicker(surface, control, pickAt) {
       gesture = null;
       return;
     }
-    if (event.button !== 0 || control.disabled || control.tabIndex < 0) return;
+    if (event.button !== 0 || spinAnimation || control.disabled || control.tabIndex < 0) return;
     // Fine pointers use the native range. Touch hits its scrollable wrapper.
     if (event.target === brightness && round.mode !== "oneshot") return;
     if (round.mode === "oneshot") {
@@ -235,7 +242,7 @@ function setTiltStatus(state) {
 byId("tilt-button").addEventListener("click", () => {
   tiltController?.abort();
   tiltController = new AbortController();
-  followTilt(tiltController.signal, () => byId("help").open ? null : round.selection,
+  followTilt(tiltController.signal, () => byId("help").open || spinAnimation ? null : round,
     values => pick("wheel", values), setTiltStatus);
 });
 
@@ -256,10 +263,15 @@ function beginRound() {
   clearInterval(clock);
   clock = null;
   gesture = null;
+  spinAnimation?.cancel();
+  spinAnimation = null;
+  instrument.inert = false;
   const choice = modes.selectedOptions[0];
-  round = new Round(choice.value, randomStartingColor());
+  round = new Round(choice.value, randomStartingColor(), round?.rotation);
   byId("mode-hint").textContent = modeHint(choice);
   byId("guess-form").dataset.mode = round.mode;
+  byId("guess-form").toggleAttribute("data-replay", playedModes.size > 0);
+  dial.style.setProperty("--wheel-angle", round.rotation + "deg");
   byId("submit-guess").hidden = round.mode === "oneshot";
   byId("submit-guess").disabled = false;
   byId("tilt-button").hidden = round.mode !== "gyro";
@@ -272,6 +284,32 @@ function beginRound() {
   if (byId("play").hidden) switchScreen(false);
   updateClock();
 }
+
+spinButton.addEventListener("click", async () => {
+  if (!playedModes.size || gesture || spinAnimation) return;
+  const degrees = round.spin();
+  if (!degrees) return;
+  const spinningRound = round;
+  const hadFocus = spinButton === document.activeElement;
+  dial.style.setProperty("--wheel-angle", round.rotation + "deg");
+  renderSelection();
+  renderLocks();
+  if (!motionPreference.matches && !effectsPaused) {
+    spinAnimation = dial.animate([{ transform: "rotate(" + -degrees + "deg)" }, { transform: "none" }],
+      { duration: 520, easing: "cubic-bezier(.2,.65,.25,1)" });
+    instrument.inert = true;
+    try { await spinAnimation.finished; } catch { /* Changing modes cancels the turn. */ }
+    if (round !== spinningRound) return;
+    spinAnimation = null;
+    instrument.inert = false;
+  }
+  if (hadFocus && (document.activeElement === document.body || document.activeElement === spinButton)) {
+    const tiltButton = byId("tilt-button");
+    const nextControl = round.mode === "gyro" ? (tiltButton.disabled ? modes : tiltButton) : wheel;
+    nextControl.focus({ preventScroll: true });
+  }
+});
+motionPreference.addEventListener("change", () => { if (motionPreference.matches) spinAnimation?.finish(); });
 
 function finishRound(now = Date.now()) {
   if (byId("play").hidden) return;
@@ -302,15 +340,15 @@ function finishRound(now = Date.now()) {
     byId(id).textContent = delta > 0 ? "+" + delta : String(delta);
   });
   replayButton.textContent = round.mode === "timed" ? "再挑戰 30 秒" : "再玩一次";
-  prepareShare({ rgb, grade, displayed, differences, mode: modeSummary, kind: round.mode, selection: { ...round.selection }, score });
+  prepareShare({ rgb, grade, displayed, differences, mode: modeSummary, kind: round.mode, selection: { ...round.selection }, rotation: round.rotation, score });
   if (byId("help").open) byId("help").close();
-  playReveal({ selection: round.selection, score, compact: narrowResults.matches });
+  playReveal({ selection: round.selection, rotation: round.rotation, score, compact: narrowResults.matches });
   switchScreen(true);
 }
 
 byId("guess-form").addEventListener("submit", event => {
   event.preventDefault();
-  if (round.mode !== "oneshot" && !byId("submit-guess").disabled) finishRound();
+  if (round.mode !== "oneshot" && !spinAnimation && !byId("submit-guess").disabled) finishRound();
 });
 modes.addEventListener("change", beginRound);
 replayButton.addEventListener("click", beginRound);

@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
-const { randomStartingColor, colorAfterTilt, hsvToRgb, rgbToHsv, scoreFromDistance, hexColor, compareWithSitcon, describeScore, describeColorDifference, describeBrightnessDifference, rankAmongRgbColors, randomGuessComparison } = require("../color.js");
+const { randomStartingColor, wheelPoint, colorAtWheelPoint, colorAfterTilt, hsvToRgb, rgbToHsv, scoreFromDistance, hexColor, compareWithSitcon, describeScore, describeColorDifference, describeBrightnessDifference, rankAmongRgbColors, randomGuessComparison } = require("../color.js");
 
 test("a fresh draw changes all three starting controls", t => {
   let draw = 0.25;
@@ -25,6 +25,20 @@ test("the official green is reachable with the wheel and brightness alone", () =
   const guess = hsvToRgb({ hue: 101, saturation: 0.503, value: 181 });
   assert.equal(hexColor(guess), "#77B55A");
   assert.equal(compareWithSitcon(guess).distance, 0);
+});
+
+test("picking, plotting and tilting agree with a turned wheel", () => {
+  const green = rgbToHsv([119, 181, 90]);
+  for (const rotation of [0, 60, 90, 177, 300, 359]) {
+    const point = wheelPoint(green, rotation);
+    const pick = colorAtWheelPoint((point.x - 50) / 50, (point.y - 50) / 50, 0, rotation);
+    assert.deepEqual(hsvToRgb({ ...pick, value: green.value }), [119, 181, 90]);
+    assert.deepEqual(colorAtWheelPoint(0, 0, 123, rotation), { hue: 123, saturation: 0 });
+    const right = wheelPoint(colorAfterTilt(green, 0.12, 0, rotation), rotation);
+    assert.ok(right.x > point.x);
+    assert.ok(Math.abs(right.y - point.y) < 1e-9);
+  }
+  assert.deepEqual(wheelPoint({ hue: 0, saturation: 1 }, 90), { x: 100, y: 50 });
 });
 
 test("a calibrated tilt ignores hand tremor and can reach the opposite rim", () => {

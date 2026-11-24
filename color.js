@@ -21,22 +21,32 @@ function randomStartingColor() {
   };
 }
 
-function colorAtWheelPoint(x, y, previousHue) {
+// Screen coordinates run clockwise from the top. The two projections share the round's rotation.
+function wheelPoint({ hue, saturation }, rotation = 0) {
+  const angle = (hue + rotation) * Math.PI / 180;
+  return { x: 50 + Math.sin(angle) * saturation * 50, y: 50 - Math.cos(angle) * saturation * 50 };
+}
+
+function wheelHue(x, y, rotation) {
+  return (Math.atan2(x, -y) * 180 / Math.PI - rotation + 720) % 360;
+}
+
+function colorAtWheelPoint(x, y, previousHue, rotation = 0) {
   const saturation = Math.min(1, Math.hypot(x, y));
-  const hue = saturation < 1e-12 ? previousHue : (Math.atan2(x, -y) * 180 / Math.PI + 360) % 360;
+  const hue = saturation < 1e-12 ? previousHue : wheelHue(x, y, rotation);
   return { hue, saturation };
 }
 
-function colorAfterTilt(origin, right, down) {
+function colorAfterTilt(origin, right, down, rotation = 0) {
   const length = Math.hypot(right, down);
   // Ignore about two degrees of hand tremor around the calibrated grip.
   const deadZone = 0.035;
   if (length <= deadZone) return { hue: origin.hue, saturation: origin.saturation };
   const gain = 3 * (1 - deadZone / length);
-  const angle = origin.hue * Math.PI / 180;
-  const x = Math.sin(angle) * origin.saturation + right * gain;
-  const y = -Math.cos(angle) * origin.saturation + down * gain;
-  return colorAtWheelPoint(x, y, origin.hue);
+  const point = wheelPoint(origin, rotation);
+  const x = (point.x - 50) / 50 + right * gain;
+  const y = (point.y - 50) / 50 + down * gain;
+  return colorAtWheelPoint(x, y, origin.hue, rotation);
 }
 
 // Hue runs clockwise in degrees, saturation from 0 to 1, and value from 0 to 255.
@@ -126,4 +136,4 @@ function randomGuessComparison(rank) {
   return `隨機挑一個 RGB 顏色，比你更接近標準綠的機率${odds}。`;
 }
 
-if (typeof module !== "undefined") module.exports = { randomStartingColor, colorAfterTilt, hsvToRgb, rgbToHsv, scoreFromDistance, hexColor, compareWithSitcon, describeScore, describeColorDifference, describeBrightnessDifference, rankAmongRgbColors, randomGuessComparison };
+if (typeof module !== "undefined") module.exports = { randomStartingColor, wheelPoint, colorAtWheelPoint, colorAfterTilt, hsvToRgb, rgbToHsv, scoreFromDistance, hexColor, compareWithSitcon, describeScore, describeColorDifference, describeBrightnessDifference, rankAmongRgbColors, randomGuessComparison };

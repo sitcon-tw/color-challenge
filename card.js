@@ -21,11 +21,6 @@ const BLUE_HOT = "#8be3ff";
 const GOLD = "#ffdf79";
 const MAX_WHEEL_ZOOM = 5;
 
-function wheelPoint({ hue, saturation }) {
-  const angle = hue * Math.PI / 180;
-  return { x: 50 + Math.sin(angle) * saturation * 50, y: 50 - Math.cos(angle) * saturation * 50 };
-}
-
 // The full wheel is 100 units across, so this distance is a percentage of its diameter.
 function wheelGapPercent(guess, target) {
   const gap = Math.hypot(guess.x - target.x, guess.y - target.y);
@@ -57,7 +52,7 @@ function fitFocus(mid, zoom) {
   return { x: 50 + (mid.x - 50) * blend, y: 50 + (mid.y - 50) * blend };
 }
 
-function drawWheel(ctx, cx, cy, diameter, zoom, mid) {
+function drawWheel(ctx, cx, cy, diameter, zoom, mid, rotation) {
   const radius = diameter / 2;
   const size = Math.ceil(diameter);
   const left = Math.round(cx - radius);
@@ -75,7 +70,7 @@ function drawWheel(ctx, cx, cy, diameter, zoom, mid) {
       const r = Math.hypot(wx, wy) / 50;
       const edge = Math.min(1, Math.max(0, (1 - r) * radius * zoom / 2));
       if (edge <= 0) continue;
-      const hue = (Math.atan2(wx, -wy) * 180 / Math.PI + 360) % 360;
+      const hue = wheelHue(wx, wy, rotation);
       const [red, green, blue] = hsvToRgb({ hue, saturation: Math.min(1, r), value: 158 });
       const at = (py * size + px) * 4;
       data[at] = red;
@@ -129,18 +124,18 @@ function drawWheel(ctx, cx, cy, diameter, zoom, mid) {
   return toScreen;
 }
 
-function drawRadar(ctx, selection, cx, cy) {
-  const guess = wheelPoint(selection);
-  const target = wheelPoint(rgbToHsv(SITCON_GREEN));
+function drawRadar(ctx, selection, cx, cy, rotation) {
+  const guess = wheelPoint(selection, rotation);
+  const target = wheelPoint(rgbToHsv(SITCON_GREEN), rotation);
   const mid = { x: (guess.x + target.x) / 2, y: (guess.y + target.y) / 2 };
   const zoom = fitZoom(guess, target);
   ctx.save();
   ctx.translate(cx, cy);
   ctx.scale(0.52, 0.52);
-  const project = drawWheel(ctx, 0, 0, 272, zoom, fitFocus(mid, zoom));
+  const project = drawWheel(ctx, 0, 0, 272, zoom, fitFocus(mid, zoom), rotation);
   const from = project(guess);
   const to = project(target);
-  const rim = ctx.createConicGradient(-Math.PI / 2, 0, 0);
+  const rim = ctx.createConicGradient((rotation - 90) * Math.PI / 180, 0, 0);
   for (let hue = 0; hue <= 360; hue += 60) rim.addColorStop(hue / 360, `hsl(${hue} 72% 69%)`);
   ctx.beginPath();
   ctx.arc(0, 0, 138, 0, 2 * Math.PI);
@@ -186,7 +181,7 @@ function drawBackground(ctx, height) {
   ctx.fillRect(0, 0, CARD_WIDTH, height);
 }
 
-function makeScoreImage({ rgb, grade, displayed, mode, invitation, selection, score, gameUrl }, format, logo) {
+function makeScoreImage({ rgb, grade, displayed, mode, invitation, selection, rotation = 0, score, gameUrl }, format, logo) {
   const layout = CARD_LAYOUT[format];
   const canvas = document.createElement("canvas");
   canvas.width = CARD_WIDTH;
@@ -213,7 +208,7 @@ function makeScoreImage({ rgb, grade, displayed, mode, invitation, selection, sc
   text("調出 SITCON 綠", left - 3, titleY, 88, 800, paper);
   text("看著標準色，憑眼力調出同一種綠。", left, ruleY, 42, 500, muted);
   const radarX = right - 100;
-  const radarZoom = drawRadar(ctx, selection, radarX, top + 86);
+  const radarZoom = drawRadar(ctx, selection, radarX, top + 86, rotation);
   text(radarZoomLabel(radarZoom), radarX, top + 203, 28, 650, muted, "center");
 
   // Both marks get the same neutral surround and subtle outline, even for a white guess.
@@ -283,4 +278,4 @@ function makeScoreImage({ rgb, grade, displayed, mode, invitation, selection, sc
   });
 }
 
-if (typeof module !== "undefined") module.exports = { fitZoom, fitFocus, wheelPoint, wheelGapPercent, wheelPositionLabel, radarZoomLabel };
+if (typeof module !== "undefined") module.exports = { fitZoom, fitFocus, wheelPoint: require("./color.js").wheelPoint, wheelGapPercent, wheelPositionLabel, radarZoomLabel };

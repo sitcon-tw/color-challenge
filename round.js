@@ -11,12 +11,23 @@ function nextPickAction(action, dx, dy, released) {
 }
 
 class Round {
-  constructor(mode, color) {
+  constructor(mode, color, rotation = 0) {
     this.mode = mode;
     this.selection = { ...color };
     this.aim = { ...color };
     this.locked = new Set();
     this.startedAt = null;
+    this.rotation = rotation;
+    this.spinDegrees = 0;
+  }
+
+  spin() {
+    if (this.spinDegrees || this.startedAt !== null) return 0;
+    // Leave at least a sixth of a turn between the old and new positions.
+    const degrees = 60 + Math.floor(Math.random() * 241);
+    this.rotation = (this.rotation + degrees) % 360;
+    this.spinDegrees = degrees;
+    return degrees;
   }
 
   elapsed(now) {

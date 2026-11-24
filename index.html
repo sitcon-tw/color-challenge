@@ -22,13 +22,13 @@
   <meta property="og:image:alt" content="調出 SITCON 綠。彩色色環中央是學生計算機年會的標準綠 Logo。">
   <meta name="twitter:card" content="summary_large_image">
   <title>SITCON Color Challenge｜調出 SITCON 綠</title>
-  <link rel="stylesheet" href="style.css?v=a9d38b4e22de">
-  <script defer src="color.js?v=689a51c979c6"></script>
-  <script defer src="round.js?v=dc7fed8da1c0"></script>
-  <script defer src="tilt.js?v=011c209c47a3"></script>
-  <script defer src="card.js?v=c47c07d4240b"></script>
-  <script defer src="reveal.js?v=282a1c1e3792"></script>
-  <script defer src="game.js?v=e7da76416f70"></script>
+  <link rel="stylesheet" href="style.css?v=66e3159d3fcc">
+  <script defer src="color.js?v=e2d256efa38f"></script>
+  <script defer src="round.js?v=ae8462843e2f"></script>
+  <script defer src="tilt.js?v=ac9451367929"></script>
+  <script defer src="card.js?v=002440d33524"></script>
+  <script defer src="reveal.js?v=1bf9810e40c9"></script>
+  <script defer src="game.js?v=3fb0d52e5d6e"></script>
   <script defer src="share.js?v=43e1c8b62188"></script>
 </head>
 <body>
@@ -89,14 +89,19 @@
         <section class="instrument" aria-labelledby="wheel-title">
           <header class="instrument-header">
             <h2 id="wheel-title"><span class="dial-icon" aria-hidden="true"></span>全彩色盤</h2>
-            <span class="dial-hint" id="wheel-hint" role="status">點選色盤，拖圓點微調</span>
+            <div class="wheel-options">
+              <span class="dial-hint" id="wheel-hint" role="status">點選色盤，拖圓點微調</span>
+              <button type="button" class="spin-button" id="spin-wheel" hidden>轉個方向再挑戰</button>
+            </div>
           </header>
           <div class="wheel-stage">
-            <div class="dial">
-              <span class="angle north" aria-hidden="true">紅</span>
-              <span class="angle east" aria-hidden="true">黃綠</span>
-              <span class="angle south" aria-hidden="true">青</span>
-              <span class="angle west" aria-hidden="true">紫</span>
+            <div class="dial" id="dial">
+              <div class="dial-labels" aria-hidden="true">
+                <span class="angle north">紅</span>
+                <span class="angle east">黃綠</span>
+                <span class="angle south">青</span>
+                <span class="angle west">紫</span>
+              </div>
               <div class="wheel" id="wheel" role="group" tabindex="0" aria-label="色相與飽和度"
                    aria-describedby="wheel-hint wheel-keys mode-hint">
                 <span class="cursor" id="cursor"></span>
@@ -243,7 +248,7 @@
       <li>左右拖曳明度滑桿，調整 SITCON Logo 的深淺。</li>
       <li>送出後揭曉雙方的色碼。RGB 距離是將紅、綠、藍的差值各自平方，相加後再開根號。距離越小，配色越準。</li>
     </ol>
-    <p>切換模式會重新抽色。一般模式從第一次調整色盤或明度開始計時，30 秒挑戰則從那一刻開始倒數。時間到會自動結算。</p>
+    <p>切換模式會重新抽色。一般模式從第一次調色開始計時，30 秒挑戰從那一刻開始倒數。再玩時可沿用上一局的方向，也可以在調色前轉動色盤一次。</p>
     <p>一發入魂可以先選色盤，也可以先選明度。每個只能點一次，按下就鎖定，兩個都鎖定後立即揭曉。</p>
     <p>陀螺儀模式請先拿穩手機，按「啟用感應」。朝想選的顏色傾斜，游標就會跟著移動。用滑桿調明度，換握姿時可按「重新校正」。</p>
     <p>用鍵盤玩時，在色盤上按左右鍵調色相，上下鍵調飽和度。按住 Shift 搭配方向鍵可以微調。一發入魂用 Enter 或空白鍵鎖定。</p>

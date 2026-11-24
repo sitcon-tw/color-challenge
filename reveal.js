@@ -220,10 +220,11 @@ function stopReveal() {
   setResultMotion(false);
 }
 
-function playReveal({ selection, score, compact }) {
+function playReveal({ selection, rotation = 0, score, compact }) {
   stopReveal();
-  const guess = wheelPoint(selection);
-  const target = wheelPoint(targetHsv);
+  const guess = wheelPoint(selection, rotation);
+  const target = wheelPoint(targetHsv, rotation);
+  map.style.setProperty("--wheel-angle", rotation + "deg");
   const mid = { x: (guess.x + target.x) / 2, y: (guess.y + target.y) / 2 };
   const zoom = fitZoom(guess, target);
   const gap = wheelGapPercent(guess, target);

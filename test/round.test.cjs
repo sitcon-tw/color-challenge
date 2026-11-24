@@ -18,6 +18,26 @@ test("scrolling cancels a touch pick, while taps and deliberate drags can start 
   assert.equal(nextPickAction("tap", 14, 0, true), "cancel");
 });
 
+test("a replay keeps its direction and allows one untimed spin before picking", t => {
+  for (const draw of [0, 0.5, 0.9999]) {
+    const random = t.mock.method(Math, "random", () => draw);
+    const round = new Round("timed", initial, 180);
+    const degrees = round.spin();
+    assert.ok(degrees >= 60 && degrees <= 300);
+    assert.equal(round.rotation, (180 + degrees) % 360);
+    assert.equal(round.startedAt, null);
+    assert.deepEqual(round.selection, initial);
+    assert.equal(round.spin(), 0);
+    assert.equal(round.spinDegrees, degrees);
+    const replay = new Round("oneshot", initial, round.rotation);
+    assert.equal(replay.rotation, round.rotation);
+    replay.pick("wheel", initial, true, 100);
+    assert.equal(replay.spin(), 0);
+    assert.equal(replay.spinDegrees, 0);
+    random.mock.restore();
+  }
+});
+
 test("the countdown waits for a change and rejects a pick at its deadline", () => {
   for (const [control, values] of [["wheel", { hue: 90 }], ["brightness", { value: 128 }]]) {
     const round = new Round("timed", initial);
