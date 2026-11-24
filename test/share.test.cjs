@@ -18,10 +18,10 @@ test("local and preview rounds share the public challenge and matching results",
   const script = readFileSync(path.join(__dirname, "..", "share.js"), "utf8");
   const gameUrl = "https://sitcon.org/color-challenge/";
   const cases = [
-    { page: "file:///tmp/color-challenge/index.html", kind: "oneshot", mode: "一發入魂 · 用時 3 秒", differences: [0, 0, 0] },
-    { page: "http://192.168.1.2:8080/preview/?pr=1", kind: "gyro", mode: "陀螺儀 · 用時 7 秒", differences: [-91, -158, 104] },
+    { page: "file:///tmp/color-challenge/index.html", kind: "oneshot", mode: "一發入魂 · 用時 3 秒", differences: [0, 0, 0], rotation: 180, spinLabel: "" },
+    { page: "http://192.168.1.2:8080/preview/?pr=1", kind: "gyro", mode: "陀螺儀 · 用時 7 秒", differences: [-91, -158, 104], rotation: 0, spinLabel: "色盤轉了 180°" },
   ];
-  for (const { page, kind, mode, differences } of cases) {
+  for (const { page, kind, mode, differences, rotation, spinLabel } of cases) {
     const elements = new Map();
     function byId(id) {
       if (!elements.has(id)) elements.set(id, { addEventListener() {} });
@@ -31,7 +31,7 @@ test("local and preview rounds share the public challenge and matching results",
     runInNewContext(script, app);
 
     const distance = Math.hypot(...differences);
-    const round = { kind, mode, differences, score: scoreFromDistance(distance), ...describeScore(distance) };
+    const round = { kind, mode, differences, rotation, spinLabel, score: scoreFromDistance(distance), ...describeScore(distance) };
     app.prepareShare(round);
     assert.equal(round.gameUrl, gameUrl);
     const caption = byId("share-text").value;
@@ -42,7 +42,7 @@ test("local and preview rounds share the public challenge and matching results",
     assert.ok(result.includes(round.grade.verdict));
     assert.ok(result.includes(`${round.score} 分`));
     assert.equal(result.match(/1000/g).length, 1);
-    assert.equal(timing, mode);
+    assert.equal(timing, spinLabel ? `${mode} · ${spinLabel}` : mode);
     assert.ok(difference.startsWith("RGB 距離 "));
     assert.ok(!caption.includes(describeColorDifference(differences)));
     assert.ok(caption.endsWith(gameUrl));
@@ -55,6 +55,7 @@ test("local and preview rounds share the public challenge and matching results",
       assert.match(preview.alt, /左邊.*我的選色，右邊.*標準綠/);
       assert.equal(preview.src, round.cards[format].url);
       for (const value of [caption, preview.alt]) {
+        assert.deepEqual(value.match(/色盤轉了 \d+°/g) ?? [], spinLabel ? [spinLabel] : []);
         for (const fact of [round.grade.name, round.grade.verdict, `${round.score} 分`, `RGB 距離 ${round.displayed.toFixed(1)}`, mode, gameUrl]) {
           assert.ok(value.includes(fact), fact);
         }

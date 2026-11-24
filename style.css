@@ -96,6 +96,7 @@ h1:focus { outline: 0; }
 .intro p { margin-top: .75rem; color: var(--muted); line-height: 1.65; }
 .intro .result-context { display: flex; flex-wrap: wrap; gap: .2rem 1rem; margin: 0 0 .5rem; font-size: .9rem; font-weight: 700; }
 .result-context span { font-weight: 450; }
+#result-spin { padding-inline: .5em; border-radius: .25rem; background: #ffedb0; color: #513c0d; }
 #tilt-button { min-height: 2.75rem; }
 #tilt-button:disabled, .guess-submit:disabled { opacity: .65; cursor: default; }
 .mode-label { color: var(--muted); font-size: .875rem; }

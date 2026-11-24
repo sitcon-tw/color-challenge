@@ -27,12 +27,13 @@ function prepareShare(round) {
   round.colorNote = exact ? "" : describeColorDifference(round.differences);
   const points = exact ? "滿分 1000 分" : `${score} 分（滿分 1000）`;
   round.resultText = `${grade.verdict}，${points}。`;
+  round.playDetails = round.spinLabel ? `${mode} · ${round.spinLabel}` : mode;
   round.distanceText = "RGB 距離 " + displayed.toFixed(1) + (exact ? "" : "（0 就是同色）");
   const opener = modeOpeners[round.kind] ?? "我看著標準色，用色盤挑戰調出 SITCON 綠";
   shareText.value = [
     `${opener}，拿到「${grade.name}」！`,
     round.resultText,
-    mode,
+    round.playDetails,
     round.distanceText,
     round.invitation,
     round.gameUrl,
@@ -53,9 +54,9 @@ async function makeShareCards(round) {
 }
 
 function previewCard(format) {
-  const { cards, mode, grade, resultText, distanceText, colorNote, gameUrl } = shareRound;
+  const { cards, playDetails, grade, resultText, distanceText, colorNote, gameUrl } = shareRound;
   sharePreview.height = cardHeights[format];
-  sharePreview.alt = `調出 SITCON 綠${format === "story" ? "限動" : "貼文"}成績單。左邊的 SITCON Logo 是我的選色，右邊是標準綠。${colorNote}${resultText}稱號「${grade.name}」。${mode}。${distanceText}。挑戰網址 ${gameUrl}`;
+  sharePreview.alt = `調出 SITCON 綠${format === "story" ? "限動" : "貼文"}成績單。左邊的 SITCON Logo 是我的選色，右邊是標準綠。${colorNote}${resultText}稱號「${grade.name}」。${playDetails}。${distanceText}。挑戰網址 ${gameUrl}`;
   if (sharePreview.src !== cards[format].url) sharePreview.src = cards[format].url;
   sharePreview.hidden = false;
 }

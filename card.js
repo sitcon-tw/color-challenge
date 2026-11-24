@@ -181,7 +181,7 @@ function drawBackground(ctx, height) {
   ctx.fillRect(0, 0, CARD_WIDTH, height);
 }
 
-function makeScoreImage({ rgb, grade, displayed, mode, invitation, selection, rotation = 0, score, gameUrl }, format, logo) {
+function makeScoreImage({ rgb, grade, displayed, mode, invitation, selection, rotation = 0, spinLabel, score, gameUrl }, format, logo) {
   const layout = CARD_LAYOUT[format];
   const canvas = document.createElement("canvas");
   canvas.width = CARD_WIDTH;
@@ -206,7 +206,8 @@ function makeScoreImage({ rgb, grade, displayed, mode, invitation, selection, ro
   ctx.fillRect(left, top + 7, 6, 35);
   text("SITCON 學生計算機年會", left + 25, top + 39, 38, 650, muted);
   text("調出 SITCON 綠", left - 3, titleY, 88, 800, paper);
-  text("看著標準色，憑眼力調出同一種綠。", left, ruleY, 42, 500, muted);
+  if (spinLabel) text(spinLabel + "，再憑眼力對色。", left, ruleY, 42, 650, GOLD);
+  else text("看著標準色，憑眼力調出同一種綠。", left, ruleY, 42, 500, muted);
   const radarX = right - 100;
   const radarZoom = drawRadar(ctx, selection, radarX, top + 86, rotation);
   text(radarZoomLabel(radarZoom), radarX, top + 203, 28, 650, muted, "center");

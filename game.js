@@ -319,6 +319,7 @@ function finishRound(now = Date.now()) {
   gesture = null;
   const modeLabel = modes.selectedOptions[0].textContent.trim();
   const modeSummary = modeLabel + " · " + round.resultTime(now);
+  const spinLabel = round.spinDegrees ? `色盤轉了 ${round.spinDegrees}°` : "";
   const rgb = hsvToRgb(round.selection);
   const { differences, distance } = compareWithSitcon(rgb);
   const { displayed, grade } = describeScore(distance);
@@ -328,6 +329,9 @@ function finishRound(now = Date.now()) {
   showSwatch("official", SITCON_GREEN);
   byId("result-title").textContent = grade.verdict + "！";
   byId("result-mode").textContent = modeSummary;
+  const spinMark = byId("result-spin");
+  spinMark.textContent = spinLabel;
+  spinMark.hidden = !spinLabel;
   byId("grade-line").textContent = grade.line;
   byId("grade").textContent = grade.name;
   byId("distance").textContent = displayed.toFixed(1);
@@ -340,7 +344,7 @@ function finishRound(now = Date.now()) {
     byId(id).textContent = delta > 0 ? "+" + delta : String(delta);
   });
   replayButton.textContent = round.mode === "timed" ? "再挑戰 30 秒" : "再玩一次";
-  prepareShare({ rgb, grade, displayed, differences, mode: modeSummary, kind: round.mode, selection: { ...round.selection }, rotation: round.rotation, score });
+  prepareShare({ rgb, grade, displayed, differences, mode: modeSummary, kind: round.mode, selection: { ...round.selection }, rotation: round.rotation, spinLabel, score });
   if (byId("help").open) byId("help").close();
   playReveal({ selection: round.selection, rotation: round.rotation, score, compact: narrowResults.matches });
   switchScreen(true);
