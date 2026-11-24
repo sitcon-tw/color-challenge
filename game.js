@@ -181,16 +181,7 @@ function orderResultPair(first, second) {
   else second.before(first);
 }
 
-function placeResultLinks({ matches: narrow }) {
-  const links = document.querySelector(".result-links");
-  const details = document.querySelector(".score-panel");
-  if (narrow) orderResultPair(links, details);
-  else orderResultPair(details, links);
-}
-
 const narrowResults = window.matchMedia("(max-width: 47rem)");
-placeResultLinks(narrowResults);
-narrowResults.addEventListener("change", placeResultLinks);
 
 new ResizeObserver(() => {
   // The mobile grid can still stack when the player uses larger text.

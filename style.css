@@ -372,6 +372,7 @@ h2 { gap: .65rem; font-size: 1.15rem; font-weight: 750; line-height: 1.4; }
 .result-ink { min-height: 3.2rem; border: 1px solid #0002; border-radius: .16rem; }
 .result-card strong { padding-top: .35rem; font: 700 .95rem/1.35 var(--mono); }
 .result-links { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.25rem; }
+.result-links p { flex: 1 1 24rem; color: var(--muted); line-height: 1.55; }
 .source-link { color: #435445; font-size: .875rem; text-underline-offset: .2em; }
 .score-panel { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem 2rem; padding: clamp(1.15rem, 2.2vw, 1.75rem); }
 .score-panel h2 + p { margin-top: .5rem; }
@@ -802,6 +803,7 @@ dialog p + p { margin-top: .6rem; }
     gap: .65rem;
   }
   .comparison-pair { column-gap: .65rem; }
+  .result-links p { grid-column: 1 / -1; }
   .result-links a { display: inline-flex; align-items: center; justify-content: center; min-block-size: 2.85rem; text-align: center; }
   .score-panel { grid-template-columns: minmax(0, 1fr); }
   .difference { padding: 1rem 0 0; border: 0; border-top: 1px dashed #a9b1a4; }
