@@ -7,6 +7,8 @@ const brightness = byId("brightness");
 const modes = byId("modes");
 const shareButton = byId("share-result");
 const replayButton = byId("replay");
+const playedModes = new Set();
+const supportsTilt = Boolean(window.DeviceOrientationEvent && window.DOMMatrix);
 let round;
 let clock = null;
 let gesture = null;
@@ -237,6 +239,17 @@ byId("tilt-button").addEventListener("click", () => {
     values => pick("wheel", values), setTiltStatus);
 });
 
+function modeHint(choice) {
+  if (playedModes.size && choice.value === "normal") {
+    if (!playedModes.has("oneshot")) return "試試一發入魂，色盤和明度各只能按一次。";
+    if (!playedModes.has("timed")) return "試試 30 秒挑戰，看你能多快調出 SITCON 綠。";
+    if (!playedModes.has("gyro") && window.isSecureContext && supportsTilt && navigator.maxTouchPoints) {
+      return "也可以選陀螺儀，傾斜手機來調色。";
+    }
+  }
+  return choice.dataset.hint;
+}
+
 function beginRound() {
   stopReveal();
   tiltController?.abort();
@@ -245,7 +258,7 @@ function beginRound() {
   gesture = null;
   const choice = modes.selectedOptions[0];
   round = new Round(choice.value, randomStartingColor());
-  byId("mode-hint").textContent = choice.dataset.hint;
+  byId("mode-hint").textContent = modeHint(choice);
   byId("guess-form").dataset.mode = round.mode;
   byId("submit-guess").hidden = round.mode === "oneshot";
   byId("submit-guess").disabled = false;
@@ -253,8 +266,7 @@ function beginRound() {
   byId("clock-label").textContent = round.mode === "timed" ? "剩餘" : "用時";
   renderLocks();
   if (round.mode === "gyro") {
-    const supported = window.DeviceOrientationEvent && window.DOMMatrix;
-    setTiltStatus(!window.isSecureContext ? "insecure" : supported ? "idle" : "unsupported");
+    setTiltStatus(!window.isSecureContext ? "insecure" : supportsTilt ? "idle" : "unsupported");
   }
   renderSelection();
   if (byId("play").hidden) switchScreen(false);
@@ -265,6 +277,7 @@ function finishRound(now = Date.now()) {
   if (byId("play").hidden) return;
   tiltController?.abort();
   clearInterval(clock);
+  playedModes.add(round.mode);
   gesture = null;
   const modeLabel = modes.selectedOptions[0].textContent.trim();
   const modeSummary = modeLabel + " · " + round.resultTime(now);
